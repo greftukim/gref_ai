@@ -33249,7 +33249,7 @@
           <span class="kpi-price">${fmt(s.last)}</span>
           <span class="kpi-unit">원/kg</span>
         </div>
-        <div class="kpi-delta ${cls}">${deltaArrow(s.change1d)} ${Math.abs(s.change1d).toFixed(1)}% 전일대비</div>
+        <div class="kpi-delta ${cls}">${isNaN(s.change1d) ? '− −% 전일대비' : deltaArrow(s.change1d) + ' ' + Math.abs(s.change1d).toFixed(1) + '% 전일대비'}</div>
         <div class="kpi-sub">30일 평균 ${fmt(s.avg30)} · 기간 ${fmtDelta(s.changePeriod)}</div>
       </div>`;
       }).join('');
@@ -33755,7 +33755,7 @@
       const kpiHtml = `
         <div class="mini-kpi"><div class="mini-kpi-lbl">현재가</div><div class="mini-kpi-val" style="color:#FFFFFF">${fmt(s.last)}</div><div class="mini-kpi-sub">${p.unit}</div></div>
         <div class="mini-kpi"><div class="mini-kpi-lbl">전일 변동</div><div class="mini-kpi-val" style="color:${s.change1d > 0 ? 'var(--red)' : s.change1d < 0 ? 'var(--blue)' : 'var(--muted)'}">
-          ${s.change1d > 0 ? '▲' : '▼'} ${Math.abs(s.change1d).toFixed(1)}%</div><div class="mini-kpi-sub">${fmt(s.prev)} → ${fmt(s.last)}</div></div>
+          ${isNaN(s.change1d) ? '− −%' : (s.change1d > 0 ? '▲' : '▼') + ' ' + Math.abs(s.change1d).toFixed(1) + '%'}</div><div class="mini-kpi-sub">${fmt(s.prev)} → ${fmt(s.last)}</div></div>
         <div class="mini-kpi"><div class="mini-kpi-lbl">30일 평균 반입량</div><div class="mini-kpi-val" style="color:var(--green)">${fmt(s.avgVol30)}</div><div class="mini-kpi-sub">단위: kg</div></div>
         <div class="mini-kpi"><div class="mini-kpi-lbl">30일 평균 단가</div><div class="mini-kpi-val">${fmt(s.avg30)}</div><div class="mini-kpi-sub">${p.unit}</div></div>
         <div class="mini-kpi"><div class="mini-kpi-lbl">최저 / 최고</div><div class="mini-kpi-val">${fmt(s.min)}</div><div class="mini-kpi-sub">최고 ${fmt(s.max)}</div></div>

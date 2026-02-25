@@ -16,6 +16,7 @@ merge_historical.py
 import csv
 import json
 import os
+import re
 import sys
 import argparse
 from datetime import datetime
@@ -34,10 +35,13 @@ CROP_ID_MAP = {
     '3': 'paprika',
 }
 CROP_CFG = {
-    'strawberry': {'weight': 1,  'box_unit': '1kg상자',  'csv': 'strawberry_prices.csv'},
-    'cucumber':   {'weight': 10, 'box_unit': '10kg상자', 'csv': 'cucumber_prices.csv'},
-    'tomato':     {'weight': 5,  'box_unit': '5kg상자',  'csv': 'tomato_prices.csv'},
-    'paprika':    {'weight': 5,  'box_unit': '5kg상자',  'csv': 'paprika_prices.csv'},
+    # weight    : 박스당 kg (avg_price 계산용)
+    # min_kg    : data/*.csv 단위 필터 — 이 값 미만인 소형 포장 제외
+    # max_price : 이상치 상한 (won/kg) — 이 값 초과 행 제외
+    'strawberry': {'weight': 1,  'box_unit': '1kg상자',  'csv': 'strawberry_prices.csv', 'min_kg': 0.5, 'max_price': 25000},
+    'cucumber':   {'weight': 10, 'box_unit': '10kg상자', 'csv': 'cucumber_prices.csv',  'min_kg': 8.0, 'max_price': 12000},
+    'tomato':     {'weight': 5,  'box_unit': '5kg상자',  'csv': 'tomato_prices.csv',    'min_kg': 4.0, 'max_price': 12000},
+    'paprika':    {'weight': 5,  'box_unit': '5kg상자',  'csv': 'paprika_prices.csv',   'min_kg': 4.0, 'max_price': 25000},
 }
 
 
@@ -113,12 +117,21 @@ def load_from_global_csv():
     return daily
 
 
+def extract_kg(unit_str):
+    """단위 문자열에서 kg 중량 추출 (예: '5kg상자' → 5.0, '0.5kg' → 0.5). 실패 시 None"""
+    m = re.match(r'^([\d.]+)\s*kg', str(unit_str).strip(), re.IGNORECASE)
+    return float(m.group(1)) if m else None
+
+
 def load_from_individual_csvs(base_daily):
     """
-    data/*.csv 로드하여 base_daily에 덮어쓰기 (최신 데이터 우선)
-    컬럼: DATE, price_per_kg, avg_price, volume
+    data/*.csv 로드하여 base_daily에 병합 (최신 데이터 우선).
+    min_kg 미만 소형 포장 단위(소매 전용)는 제외하여 이상치 방지.
+    같은 날짜에 여러 행이 있는 경우 평균을 냄.
+    컬럼: DATE, unit, price_per_kg, avg_price, volume
     """
     print(f"[2/3] data/*.csv 로드 중...")
+    skipped_unit = 0
     updated = 0
 
     for crop, cfg in CROP_CFG.items():
@@ -126,22 +139,44 @@ def load_from_individual_csvs(base_daily):
         if not os.path.exists(csv_path):
             continue
 
+        min_kg = cfg.get('min_kg', 0)
+        # 임시 누적 버퍼: date → {p_sum, count, v_sum}
+        buf = {}
         for row in read_csv_safe(csv_path):
             date_str = parse_date(row.get('DATE') or row.get('date', ''))
             if not date_str:
                 continue
+
+            # 소형 포장 단위 필터 (단위 컬럼이 있는 경우에만)
+            unit_str = row.get('unit') or row.get('UNIT') or ''
+            if unit_str:
+                kg = extract_kg(unit_str)
+                if kg is not None and kg < min_kg:
+                    skipped_unit += 1
+                    continue
+
             try:
                 p = float(row.get('price_per_kg') or row.get('avg_price') or 0)
                 v = float(row.get('volume') or 0)
                 if p <= 0:
                     continue
+                if p > cfg['max_price']:
+                    skipped_unit += 1
+                    continue
             except (ValueError, TypeError):
                 continue
 
-            base_daily[crop][date_str] = {'p_sum': p, 'count': 1, 'v_sum': v}
+            if date_str not in buf:
+                buf[date_str] = {'p_sum': 0.0, 'count': 0, 'v_sum': 0.0}
+            buf[date_str]['p_sum']  += p
+            buf[date_str]['count']  += 1
+            buf[date_str]['v_sum']  += v
+
+        for date_str, rec in buf.items():
+            base_daily[crop][date_str] = rec
             updated += 1
 
-    print(f"      → {updated}건 병합 (개별 CSV 우선 적용)")
+    print(f"      → {updated}건 병합 (소형 단위 {skipped_unit}행 제외, 개별 CSV 우선 적용)")
     return base_daily
 
 
@@ -169,7 +204,7 @@ def load_from_prices_json(base_daily):
             if not d or d in base_daily[crop]:
                 continue  # 이미 CSV에서 로드된 날짜는 건너뜀
             p = r.get('price', 0)
-            if p <= 0:
+            if p <= 0 or p > cfg['max_price']:
                 continue
             base_daily[crop][d] = {'p_sum': p, 'count': 1, 'v_sum': r.get('volume', 0)}
             added += 1
@@ -225,7 +260,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 60)
-    print("merge_historical.py — 과거 데이터 병합")
+    print("merge_historical.py - 과거 데이터 병합")
     print("=" * 60)
 
     # 1) global CSV 로드
