@@ -1,0 +1,59 @@
+name: 도매단가 데이터 자동 업데이트
+
+on:
+  schedule:
+    # 한국시간 오전 9시 = UTC 00:00
+    - cron: '0 0 * * *'
+  workflow_dispatch:   # 수동 실행 허용
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # prices.json commit & push 권한
+
+    steps:
+      # ── 1. 저장소 체크아웃 ─────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Python 환경 설정 ────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ── 3. 의존성 설치 ─────────────────────────────────────────────────────
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pandas selenium webdriver-manager lightgbm scikit-learn openpyxl
+
+      # ── 4. Chrome 설치 (nongnet_crawler Selenium용) ────────────────────────
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      # ── 5. 농넷 크롤링 → data/*.csv 업데이트 ─────────────────────────────
+      - name: Run nongnet crawler
+        env:
+          # 크롤러 다운로드 경로를 Actions 임시 폴더로 지정
+          NONGNET_DOWNLOAD_DIR: ${{ runner.temp }}/downloads
+        run: |
+          mkdir -p ${{ runner.temp }}/downloads
+          python execution/nongnet_crawler.py
+        continue-on-error: true   # 크롤링 실패 시에도 기존 CSV로 JSON 생성
+
+      # ── 6. prices.json 생성 (모델 학습 건너뜀 — 기존 예측 재사용) ──────────
+      - name: Generate prices.json
+        run: python execution/main_update.py --skip-train
+
+      # ── 7. 변경사항 커밋 & 푸시 ───────────────────────────────────────────
+      - name: Commit and push updated data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/prices.json data/*.csv
+          git diff --staged --quiet || git commit -m "chore: 데이터 자동 업데이트 $(date +'%Y-%m-%d') [skip ci]"
+          git push

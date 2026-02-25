@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PriceFlow — 도매단가 수요 예측 플랫폼</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #060E1C;
+      --surface:      #0A1828;
+      --surface2:     #0F2040;
+      --border:       rgba(0,210,140,0.14);
+      --border-dim:   rgba(255,255,255,0.06);
+      --green:        #00D48C;
+      --green-bright: #00FFAA;
+      --green-dim:    rgba(0,212,140,0.12);
+      --amber:        #F5A623;
+      --amber-dim:    rgba(245,166,35,0.15);
+      --red:          #FF4757;
+      --blue:         #4A9EFF;
+      --text:         #DDE8F5;
+      --text-dim:     rgba(221,232,245,0.55);
+      --text-muted:   rgba(221,232,245,0.30);
+      --mono:         'DM Mono', monospace;
+      --sans:         'Pretendard', sans-serif;
+      --display:      'Pretendard', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* grid paper background */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--border-dim) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
+      background-size: 56px 56px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 48px;
+      border-bottom: 1px solid var(--border-dim);
+      background: rgba(6,14,28,0.82);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav-logo {
+      font-family: var(--display); font-size: 20px; font-weight: 800;
+      color: var(--text); text-decoration: none;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .logo-mark {
+      width: 30px; height: 30px; background: var(--green);
+      border-radius: 6px; display: grid; place-items: center;
+    }
+    .logo-mark svg { width: 16px; height: 16px; }
+
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a {
+      color: var(--text-dim); text-decoration: none;
+      font-size: 13px; font-weight: 400; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-right { display: flex; gap: 10px; align-items: center; }
+
+    .btn { padding: 8px 18px; border-radius: 5px; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s; font-family: var(--sans); display: inline-flex; align-items: center; gap: 6px; }
+    .btn-ghost { border: 1px solid var(--border-dim); background: transparent; color: var(--text-dim); }
+    .btn-ghost:hover { border-color: var(--green); color: var(--green); }
+    .btn-primary { border: 1px solid var(--green); background: var(--green); color: #060E1C; font-weight: 700; }
+    .btn-primary:hover { background: var(--green-bright); border-color: var(--green-bright); }
+    .btn-lg { padding: 13px 28px; font-size: 15px; border-radius: 6px; }
+    .btn-outline-lg { padding: 12px 28px; font-size: 15px; border-radius: 6px; border: 1px solid var(--border-dim); background: transparent; color: var(--text-dim); }
+    .btn-outline-lg:hover { border-color: var(--text-dim); color: var(--text); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center; gap: 0;
+      padding: 100px 48px 80px;
+      overflow: hidden;
+    }
+
+    .hero-left { max-width: 560px; }
+
+    .hero-eyebrow {
+      font-family: var(--mono); font-size: 11px; color: var(--green);
+      letter-spacing: 0.16em; text-transform: uppercase;
+      margin-bottom: 22px; display: flex; align-items: center; gap: 12px;
+    }
+    .hero-eyebrow::before { content: ''; width: 36px; height: 1px; background: var(--green); }
+
+    .hero-title {
+      font-family: var(--display); font-size: clamp(44px, 5.5vw, 84px);
+      font-weight: 800; line-height: 1.0; letter-spacing: -0.03em;
+      margin-bottom: 22px;
+    }
+    .hero-title .line { display: block; }
+    .hero-title .accent { color: var(--green); position: relative; }
+    .hero-title .accent::after {
+      content: ''; position: absolute; bottom: 2px; left: 0; right: 0;
+      height: 3px; background: var(--green); opacity: 0.3;
+    }
+
+    .hero-sub {
+      font-size: 16px; color: var(--text-dim); line-height: 1.75;
+      max-width: 440px; margin-bottom: 36px;
+    }
+
+    .hero-actions { display: flex; gap: 12px; align-items: center; margin-bottom: 56px; }
+
+    .hero-trust {
+      display: flex; align-items: center; gap: 20px;
+      border-top: 1px solid var(--border-dim); padding-top: 24px;
+    }
+    .trust-label { font-family: var(--mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.1em; }
+    .trust-badges { display: flex; gap: 12px; }
+    .trust-badge {
+      font-family: var(--mono); font-size: 10px; color: var(--text-dim);
+      border: 1px solid var(--border-dim); border-radius: 3px; padding: 3px 8px;
+    }
+
+    /* Hero Chart */
+    .hero-right {
+      display: flex; align-items: center; justify-content: flex-end;
+      padding-left: 40px;
+    }
+
+    .chart-window {
+      width: 100%; max-width: 620px;
+      background: var(--surface); border: 1px solid var(--border-dim);
+      border-radius: 10px; overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+    }
+
+    .window-titlebar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-bottom: 1px solid var(--border-dim);
+      background: rgba(0,0,0,0.2);
+    }
+    .window-dots { display: flex; gap: 6px; }
+    .wd { width: 10px; height: 10px; border-radius: 50%; }
+    .wd-r { background: #FF5F57; } .wd-y { background: #FFBD2E; } .wd-g { background: #28C940; }
+    .window-label { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+    .window-live { display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; color: var(--green); }
+    .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: blink 1.4s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+    #heroCanvas { display: block; width: 100%; }
+
+    .chart-legend-bar {
+      display: flex; gap: 20px; align-items: center;
+      padding: 10px 14px; border-top: 1px solid var(--border-dim);
+    }
+    .leg { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+    .leg-line { width: 20px; height: 2px; border-radius: 1px; }
+    .leg-solid { background: var(--green); }
+    .leg-dashed {
+      background: repeating-linear-gradient(90deg, var(--amber) 0, var(--amber) 4px, transparent 4px, transparent 7px);
+    }
+    .leg-band { width: 20px; height: 8px; border-radius: 2px; background: rgba(0,212,140,0.2); }
+
+    /* ── TICKER ── */
+    .ticker-wrap {
+      position: relative; z-index: 1;
+      overflow: hidden; white-space: nowrap;
+      border-top: 1px solid var(--border-dim); border-bottom: 1px solid var(--border-dim);
+      background: rgba(10,24,40,0.9); padding: 11px 0;
+    }
+    .ticker-track { display: inline-flex; animation: scroll-left 32s linear infinite; }
+    @keyframes scroll-left { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    .ticker-item {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 0 28px; font-family: var(--mono); font-size: 12px;
+      border-right: 1px solid var(--border-dim);
+    }
+    .t-name { color: var(--text-muted); font-size: 10px; letter-spacing: 0.06em; }
+    .t-price { color: var(--text); font-weight: 500; }
+    .t-chg { font-size: 11px; }
+    .up { color: var(--green); } .dn { color: var(--red); }
+
+    /* ── STATS ── */
+    .stats-section {
+      position: relative; z-index: 1;
+      display: grid; grid-template-columns: repeat(4,1fr);
+      background: var(--border-dim); gap: 1px;
+    }
+    .stat-card {
+      background: var(--bg); padding: 48px 36px;
+      position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--green), transparent);
+      opacity: 0; transition: opacity 0.4s;
+    }
+    .stat-card:hover::before { opacity: 1; }
+    .stat-num {
+      font-family: var(--display); font-size: 52px; font-weight: 800;
+      line-height: 1; margin-bottom: 10px;
+    }
+    .stat-num .g { color: var(--green); }
+    .stat-num .a { color: var(--amber); }
+    .stat-lbl { font-family: var(--mono); font-size: 11px; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+    /* ── FEATURES ── */
+    .features-section { position: relative; z-index: 1; padding: 120px 48px; }
+
+    .section-eyebrow {
+      font-family: var(--mono); font-size: 11px; color: var(--green);
+      letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 14px;
+    }
+    .section-title {
+      font-family: var(--display); font-size: clamp(30px, 3.5vw, 52px);
+      font-weight: 800; line-height: 1.1; letter-spacing: -0.02em;
+      margin-bottom: 60px; max-width: 560px;
+    }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 1px; background: var(--border-dim);
+      border: 1px solid var(--border-dim); border-radius: 12px; overflow: hidden;
+    }
+    .feat-card {
+      background: var(--surface); padding: 44px 36px;
+      transition: background 0.3s; position: relative; overflow: hidden;
+    }
+    .feat-card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--green); transform: scaleX(0); transform-origin: left; transition: transform 0.35s;
+    }
+    .feat-card:hover::after { transform: scaleX(1); }
+    .feat-card:hover { background: var(--surface2); }
+
+    .feat-num { font-family: var(--mono); font-size: 10px; color: var(--green); letter-spacing: 0.1em; margin-bottom: 20px; }
+    .feat-icon { margin-bottom: 18px; }
+    .feat-icon svg { width: 36px; height: 36px; }
+    .feat-title { font-family: var(--display); font-size: 22px; font-weight: 700; margin-bottom: 12px; line-height: 1.2; }
+    .feat-desc { font-size: 13px; color: var(--text-dim); line-height: 1.75; margin-bottom: 28px; }
+
+    .feat-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+    .feat-tag {
+      font-family: var(--mono); font-size: 10px;
+      border: 1px solid var(--border-dim); border-radius: 3px;
+      padding: 3px 8px; color: var(--text-muted);
+    }
+
+    /* mini preview inside feature cards */
+    .feat-preview { border: 1px solid var(--border-dim); border-radius: 7px; background: var(--bg); margin-bottom: 24px; overflow: hidden; }
+
+    /* price input mock */
+    .pinput-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border-dim); }
+    .ph-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .ph-title { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+    .pinput-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .pi-row { display: flex; gap: 6px; align-items: center; }
+    .pi-label { font-family: var(--mono); font-size: 9px; color: var(--text-muted); width: 52px; flex-shrink: 0; }
+    .pi-field {
+      flex: 1; background: var(--surface); border: 1px solid var(--border-dim);
+      border-radius: 3px; padding: 5px 8px; font-family: var(--mono); font-size: 10px; color: var(--text);
+    }
+    .pi-field.focus { border-color: var(--green); color: var(--green); }
+    .pi-btn {
+      margin-top: 4px; background: var(--green); color: #060E1C;
+      font-family: var(--mono); font-size: 10px; font-weight: 500;
+      padding: 5px 12px; border-radius: 3px; display: inline-block; width: max-content;
+    }
+
+    /* mini forecast chart SVG */
+    .mfc-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border-dim); }
+    .mfc-title { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+    .mfc-badge { font-family: var(--mono); font-size: 9px; color: var(--green); background: var(--green-dim); padding: 2px 6px; border-radius: 3px; }
+    .mfc-svg { display: block; width: 100%; padding: 8px 12px; }
+
+    /* mini dashboard KPIs */
+    .mdb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 12px; }
+    .mdb-kpi { background: var(--surface); border: 1px solid var(--border-dim); border-radius: 4px; padding: 9px 10px; }
+    .mdb-lbl { font-family: var(--mono); font-size: 8px; color: var(--text-muted); margin-bottom: 4px; }
+    .mdb-val { font-family: var(--mono); font-size: 15px; font-weight: 500; }
+    .mdb-val.g { color: var(--green); } .mdb-val.a { color: var(--amber); }
+    .mdb-val.r { color: var(--red); }
+
+    /* ── DASHBOARD PREVIEW ── */
+    .dashboard-section { position: relative; z-index: 1; padding: 80px 48px 120px; overflow: hidden; }
+
+    .db-window {
+      margin-top: 52px; border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border-dim);
+      box-shadow: 0 60px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
+    }
+
+    .db-titlebar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 18px; background: var(--surface); border-bottom: 1px solid var(--border-dim);
+    }
+    .db-tab {
+      font-family: var(--mono); font-size: 11px; padding: 5px 12px;
+      border-radius: 4px; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+    }
+    .db-tab.active { background: var(--green-dim); color: var(--green); }
+    .db-tab:hover:not(.active) { color: var(--text-dim); }
+
+    .db-spacer { flex: 1; }
+    .db-time { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+
+    .db-body { display: grid; grid-template-columns: 200px 1fr; background: var(--bg); min-height: 480px; }
+
+    .db-sidebar { border-right: 1px solid var(--border-dim); padding: 18px 12px; }
+    .sidebar-grp { margin-bottom: 20px; }
+    .sidebar-grp-lbl { font-family: var(--mono); font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; padding: 0 8px; margin-bottom: 8px; }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 9px; padding: 7px 8px;
+      border-radius: 5px; font-size: 12px; color: var(--text-dim);
+      cursor: pointer; transition: all 0.15s; margin-bottom: 1px;
+    }
+    .sidebar-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .sidebar-item.active { background: var(--green-dim); color: var(--green); }
+    .si-icon { width: 14px; height: 14px; opacity: 0.7; flex-shrink: 0; }
+    .sidebar-item.active .si-icon { opacity: 1; }
+
+    .db-main { padding: 22px; }
+    .db-main-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .db-main-title { font-family: var(--display); font-size: 18px; font-weight: 700; }
+    .db-filter-row { display: flex; gap: 8px; }
+    .db-filter {
+      font-family: var(--mono); font-size: 10px; color: var(--text-muted);
+      border: 1px solid var(--border-dim); border-radius: 3px;
+      padding: 4px 10px; background: transparent; cursor: pointer;
+    }
+
+    .kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+    .kpi-card { background: var(--surface); border: 1px solid var(--border-dim); border-radius: 7px; padding: 14px 16px; }
+    .kpi-lbl { font-family: var(--mono); font-size: 9px; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.05em; }
+    .kpi-val { font-family: var(--display); font-size: 26px; font-weight: 800; margin-bottom: 5px; }
+    .kpi-delta { font-family: var(--mono); font-size: 10px; }
+    .pos { color: var(--green); } .neg { color: var(--red); } .neu { color: var(--text-muted); }
+
+    .charts-row { display: grid; grid-template-columns: 1.6fr 1fr; gap: 10px; }
+    .chart-box { background: var(--surface); border: 1px solid var(--border-dim); border-radius: 7px; padding: 14px 16px; }
+    .cb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .cb-title { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+    .cb-pill { font-family: var(--mono); font-size: 9px; color: var(--text-muted); border: 1px solid var(--border-dim); border-radius: 2px; padding: 1px 6px; }
+
+    /* Inline SVG charts */
+    .inline-chart { width: 100%; }
+
+    /* bar chart rows */
+    .bar-rows { display: flex; flex-direction: column; gap: 6px; padding: 4px 0; }
+    .bar-row { display: flex; align-items: center; gap: 8px; }
+    .bar-name { font-family: var(--mono); font-size: 9px; color: var(--text-muted); width: 60px; flex-shrink: 0; text-align: right; }
+    .bar-track { flex: 1; background: rgba(255,255,255,0.05); border-radius: 2px; height: 8px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 2px; }
+    .bar-val { font-family: var(--mono); font-size: 9px; color: var(--text-dim); width: 48px; }
+
+    /* ── PROCESS ── */
+    .process-section {
+      position: relative; z-index: 1;
+      padding: 120px 48px; background: var(--surface);
+      border-top: 1px solid var(--border-dim); border-bottom: 1px solid var(--border-dim);
+    }
+    .process-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 48px; margin-top: 64px; position: relative; }
+    .process-steps::before {
+      content: ''; position: absolute; top: 28px;
+      left: calc(16.66% + 20px); right: calc(16.66% + 20px);
+      height: 1px; background: var(--border);
+    }
+    .proc-step {}
+    .step-num {
+      width: 56px; height: 56px; border: 1px solid var(--border); border-radius: 50%;
+      display: grid; place-items: center; font-family: var(--mono); font-size: 18px;
+      color: var(--green); background: var(--bg); margin-bottom: 24px;
+    }
+    .step-title { font-family: var(--display); font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+    .step-desc { font-size: 13px; color: var(--text-dim); line-height: 1.75; }
+    .step-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 16px; }
+    .step-tag { font-family: var(--mono); font-size: 9px; color: var(--green); background: var(--green-dim); border-radius: 3px; padding: 2px 7px; }
+
+    /* ── CTA ── */
+    .cta-section {
+      position: relative; z-index: 1; overflow: hidden;
+      padding: 160px 48px; text-align: center;
+    }
+    .cta-glow {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 700px; height: 500px;
+      background: radial-gradient(ellipse at center, rgba(0,212,140,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-eyebrow { font-family: var(--mono); font-size: 11px; color: var(--green); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 20px; display: block; }
+    .cta-title {
+      font-family: var(--display); font-size: clamp(40px, 6vw, 80px);
+      font-weight: 800; line-height: 1; letter-spacing: -0.03em; margin-bottom: 22px;
+    }
+    .cta-sub { font-size: 16px; color: var(--text-dim); max-width: 440px; margin: 0 auto 40px; line-height: 1.7; }
+    .cta-actions { display: flex; gap: 12px; justify-content: center; align-items: center; margin-bottom: 40px; }
+    .cta-note { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border-dim);
+      padding: 36px 48px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-left { display: flex; align-items: center; gap: 20px; }
+    .footer-brand { font-family: var(--display); font-size: 16px; font-weight: 800; color: var(--text); }
+    .footer-copy { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-family: var(--mono); font-size: 11px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--green); }
+
+    /* ── REVEAL ANIMATIONS ── */
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal.in { opacity: 1; transform: none; }
+    .reveal-d1 { transition-delay: 0.08s; }
+    .reveal-d2 { transition-delay: 0.16s; }
+    .reveal-d3 { transition-delay: 0.24s; }
+    .reveal-d4 { transition-delay: 0.32s; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(0,212,140,0.3); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 16 16" fill="none">
+        <polyline points="2,12 5,8 8,10 11,4 14,6" stroke="#060E1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    PriceFlow
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">기능</a></li>
+    <li><a href="#dashboard">대시보드</a></li>
+    <li><a href="#process">워크플로</a></li>
+    <li><a href="#docs">문서</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="#" class="btn btn-ghost">로그인</a>
+    <a href="#" class="btn btn-primary">무료 시작</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">도매단가 수요 예측 플랫폼</div>
+    <h1 class="hero-title">
+      <span class="line">데이터가 말하는</span>
+      <span class="line accent">내일의 단가</span>
+    </h1>
+    <p class="hero-sub">
+      상품별 도매단가를 입력하면 AI가 수요를 예측합니다.
+      실시간 대시보드로 구매·영업 의사결정을 더 빠르고 정확하게.
+    </p>
+    <div class="hero-actions">
+      <a href="#" class="btn btn-primary btn-lg">무료로 시작하기 →</a>
+      <a href="#dashboard" class="btn-outline-lg btn">대시보드 보기</a>
+    </div>
+    <div class="hero-trust">
+      <span class="trust-label">MAPE 정확도</span>
+      <div class="trust-badges">
+        <span class="trust-badge">이동평균 MA</span>
+        <span class="trust-badge">지수평활 ETS</span>
+        <span class="trust-badge">Prophet</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="chart-window">
+      <div class="window-titlebar">
+        <div class="window-dots">
+          <div class="wd wd-r"></div><div class="wd wd-y"></div><div class="wd wd-g"></div>
+        </div>
+        <span class="window-label">단가 추이 &amp; 수요 예측 — 국내산 배추 (10kg)</span>
+        <div class="window-live"><div class="live-dot"></div>LIVE</div>
+      </div>
+      <canvas id="heroCanvas"></canvas>
+      <div class="chart-legend-bar">
+        <div class="leg"><div class="leg-line leg-solid"></div>실적 단가</div>
+        <div class="leg"><div class="leg-line leg-dashed"></div>예측 단가</div>
+        <div class="leg"><div class="leg-band"></div>95% 신뢰구간</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-track" id="tickerTrack">
+    <!-- Items injected by JS -->
+  </div>
+</div>
+
+<!-- STATS -->
+<section class="stats-section">
+  <div class="stat-card reveal">
+    <div class="stat-num"><span class="counter-val" data-target="2847" data-suffix=""></span><span class="g">+</span></div>
+    <div class="stat-lbl">등록 상품 수</div>
+  </div>
+  <div class="stat-card reveal reveal-d1">
+    <div class="stat-num"><span class="counter-val" data-target="94" data-suffix=""></span><span class="g">%</span></div>
+    <div class="stat-lbl">평균 예측 정확도</div>
+  </div>
+  <div class="stat-card reveal reveal-d2">
+    <div class="stat-num"><span class="counter-val" data-target="51" data-suffix=""></span><span class="g">%</span></div>
+    <div class="stat-lbl">업무 시간 단축</div>
+  </div>
+  <div class="stat-card reveal reveal-d3">
+    <div class="stat-num"><span class="counter-val" data-target="320" data-suffix=""></span><span class="a">개</span></div>
+    <div class="stat-lbl">사용 기업</div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section" id="features">
+  <div class="section-eyebrow">핵심 기능</div>
+  <h2 class="section-title reveal">단가 입력부터 의사결정까지, 하나의 플랫폼</h2>
+
+  <div class="features-grid">
+    <!-- Feature 1 -->
+    <div class="feat-card reveal">
+      <div class="feat-num">01 / 03</div>
+      <div class="feat-icon">
+        <svg viewBox="0 0 36 36" fill="none" stroke="var(--green)" stroke-width="1.5">
+          <rect x="4" y="6" width="28" height="24" rx="3"/>
+          <line x1="4" y1="12" x2="32" y2="12"/>
+          <line x1="12" y1="6" x2="12" y2="12"/>
+          <line x1="24" y1="6" x2="24" y2="12"/>
+          <line x1="10" y1="20" x2="18" y2="20"/>
+          <line x1="10" y1="25" x2="22" y2="25"/>
+          <circle cx="26" cy="24" r="4" stroke="var(--green)" fill="none"/>
+          <line x1="29" y1="27" x2="32" y2="30"/>
+        </svg>
+      </div>
+      <h3 class="feat-title">상품별<br>도매단가 입력</h3>
+      <p class="feat-desc">날짜별 단가를 직접 입력하거나 CSV/XLSX로 대량 업로드. ±30% 급등락 시 자동 경고.</p>
+
+      <div class="feat-preview">
+        <div class="pinput-header">
+          <div class="ph-dot"></div>
+          <span class="ph-title">단가 입력 — 2026.02.22</span>
+        </div>
+        <div class="pinput-body">
+          <div class="pi-row"><span class="pi-label">상품명</span><div class="pi-field">국내산 배추 10kg</div></div>
+          <div class="pi-row"><span class="pi-label">카테고리</span><div class="pi-field">채소류</div></div>
+          <div class="pi-row"><span class="pi-label">도매단가</span><div class="pi-field focus">₩ 12,400</div></div>
+          <div class="pi-row"><span class="pi-label">공급업체</span><div class="pi-field">농협 서울</div></div>
+          <div class="pi-btn">저장하기</div>
+        </div>
+      </div>
+
+      <div class="feat-tags">
+        <span class="feat-tag">CSV 업로드</span>
+        <span class="feat-tag">이력 관리</span>
+        <span class="feat-tag">급등락 경고</span>
+      </div>
+    </div>
+
+    <!-- Feature 2 -->
+    <div class="feat-card reveal reveal-d1">
+      <div class="feat-num">02 / 03</div>
+      <div class="feat-icon">
+        <svg viewBox="0 0 36 36" fill="none" stroke="var(--green)" stroke-width="1.5">
+          <polyline points="4,28 10,20 16,22 22,10 28,14 32,8" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="28,14 34,6" stroke="var(--amber)" stroke-width="1.5" stroke-dasharray="2,2" stroke-linecap="round"/>
+          <line x1="4" y1="6" x2="4" y2="30"/><line x1="4" y1="30" x2="33" y2="30"/>
+        </svg>
+      </div>
+      <h3 class="feat-title">수요 예측<br>그래프</h3>
+      <p class="feat-desc">이동평균·지수평활·선형회귀 모델로 30~90일 단가 예측. 95% 신뢰구간 시각화.</p>
+
+      <div class="feat-preview">
+        <div class="mfc-header">
+          <span class="mfc-title">배추 — 30일 예측 (ETS 모델)</span>
+          <span class="mfc-badge">MAPE 8.4%</span>
+        </div>
+        <svg class="mfc-svg" viewBox="0 0 260 80" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#00D48C" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#00D48C" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- confidence band -->
+          <path d="M160,45 L180,40 L200,38 L220,36 L240,32 L240,55 L220,58 L200,60 L180,58 L160,55 Z" fill="rgba(0,212,140,0.12)"/>
+          <!-- area fill under historical -->
+          <path d="M10,65 L30,52 L50,58 L70,45 L90,50 L110,38 L130,42 L150,35 L160,45 L160,75 Z" fill="url(#g1)"/>
+          <!-- historical line -->
+          <polyline points="10,65 30,52 50,58 70,45 90,50 110,38 130,42 150,35 160,45" fill="none" stroke="#00D48C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- forecast line -->
+          <polyline points="160,45 180,40 200,38 220,36 240,32" fill="none" stroke="#F5A623" stroke-width="1.8" stroke-dasharray="4,3" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- today line -->
+          <line x1="160" y1="8" x2="160" y2="75" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="162" y="14" font-family="DM Mono, monospace" font-size="7" fill="rgba(255,255,255,0.3)">TODAY</text>
+          <!-- endpoint dot -->
+          <circle cx="160" cy="45" r="3" fill="#00D48C"/>
+          <!-- y-axis labels -->
+          <text x="2" y="38" font-family="DM Mono, monospace" font-size="7" fill="rgba(221,232,245,0.35)">14k</text>
+          <text x="2" y="55" font-family="DM Mono, monospace" font-size="7" fill="rgba(221,232,245,0.35)">12k</text>
+          <text x="2" y="70" font-family="DM Mono, monospace" font-size="7" fill="rgba(221,232,245,0.35)">10k</text>
+        </svg>
+      </div>
+
+      <div class="feat-tags">
+        <span class="feat-tag">이동평균 MA</span>
+        <span class="feat-tag">지수평활 ETS</span>
+        <span class="feat-tag">신뢰구간</span>
+        <span class="feat-tag">비교 분석</span>
+      </div>
+    </div>
+
+    <!-- Feature 3 -->
+    <div class="feat-card reveal reveal-d2">
+      <div class="feat-num">03 / 03</div>
+      <div class="feat-icon">
+        <svg viewBox="0 0 36 36" fill="none" stroke="var(--green)" stroke-width="1.5">
+          <rect x="3" y="3" width="13" height="13" rx="2"/>
+          <rect x="20" y="3" width="13" height="13" rx="2"/>
+          <rect x="3" y="20" width="13" height="13" rx="2"/>
+          <rect x="20" y="20" width="13" height="13" rx="2"/>
+          <polyline points="24,26 26,29 30,24" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3 class="feat-title">데이터 분석<br>대시보드</h3>
+      <p class="feat-desc">KPI 카드, 히트맵, 추이 차트를 한눈에. 단가 급변 알림과 PDF 리포트 자동 생성.</p>
+
+      <div class="feat-preview">
+        <div class="mdb-grid">
+          <div class="mdb-kpi"><div class="mdb-lbl">취급 상품 수</div><div class="mdb-val">2,847</div></div>
+          <div class="mdb-kpi"><div class="mdb-lbl">단가 변동률</div><div class="mdb-val g">+3.2%</div></div>
+          <div class="mdb-kpi"><div class="mdb-lbl">예측 정확도</div><div class="mdb-val g">94.1%</div></div>
+          <div class="mdb-kpi"><div class="mdb-lbl">이상 감지</div><div class="mdb-val a">7건</div></div>
+        </div>
+      </div>
+
+      <div class="feat-tags">
+        <span class="feat-tag">KPI 카드</span>
+        <span class="feat-tag">히트맵</span>
+        <span class="feat-tag">PDF 리포트</span>
+        <span class="feat-tag">알림</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD PREVIEW -->
+<section class="dashboard-section" id="dashboard">
+  <div class="section-eyebrow">대시보드 미리보기</div>
+  <h2 class="section-title reveal">모든 데이터를 한 화면에</h2>
+
+  <div class="db-window reveal">
+    <div class="db-titlebar">
+      <span class="db-tab active">대시보드</span>
+      <span class="db-tab">상품 관리</span>
+      <span class="db-tab">수요 예측</span>
+      <span class="db-tab">분석</span>
+      <div class="db-spacer"></div>
+      <span class="db-time">2026-02-22 &nbsp;|&nbsp; 14:32:07 KST</span>
+    </div>
+    <div class="db-body">
+      <!-- Sidebar -->
+      <div class="db-sidebar">
+        <div class="sidebar-grp">
+          <div class="sidebar-grp-lbl">메인</div>
+          <div class="sidebar-item active">
+            <svg class="si-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+            대시보드
+          </div>
+          <div class="sidebar-item">
+            <svg class="si-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="2" width="10" height="10" rx="1"/><line x1="2" y1="5" x2="12" y2="5"/><line x1="5" y1="2" x2="5" y2="12"/></svg>
+            상품 목록
+          </div>
+          <div class="sidebar-item">
+            <svg class="si-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><polyline points="1,11 4,7 7,9 10,4 13,6"/></svg>
+            수요 예측
+          </div>
+        </div>
+        <div class="sidebar-grp">
+          <div class="sidebar-grp-lbl">분석</div>
+          <div class="sidebar-item">
+            <svg class="si-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7" cy="7" r="5"/><polyline points="7,4 7,7 9,9"/></svg>
+            실적 분석
+          </div>
+          <div class="sidebar-item">
+            <svg class="si-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1,13 L5,8 L8,10 L12,2"/></svg>
+            비교 분석
+          </div>
+        </div>
+        <div class="sidebar-grp">
+          <div class="sidebar-grp-lbl">시스템</div>
+          <div class="sidebar-item">
+            <svg class="si-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7" cy="7" r="2"/><path d="M7,1 L7,3 M7,11 L7,13 M1,7 L3,7 M11,7 L13,7"/></svg>
+            설정
+          </div>
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div class="db-main">
+        <div class="db-main-header">
+          <div class="db-main-title">전체 현황</div>
+          <div class="db-filter-row">
+            <div class="db-filter">2026.01 — 2026.02 ▾</div>
+            <div class="db-filter">전체 카테고리 ▾</div>
+            <div class="db-filter">전체 공급업체 ▾</div>
+          </div>
+        </div>
+
+        <!-- KPI Row -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-lbl">취급 상품 수</div>
+            <div class="kpi-val">2,847</div>
+            <div class="kpi-delta pos">▲ 128 신규 등록</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-lbl">금월 평균 단가 변동</div>
+            <div class="kpi-val" style="color:var(--green)">+3.2%</div>
+            <div class="kpi-delta pos">▲ 전월 대비 1.1%p</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-lbl">예측 정확도 (MAPE)</div>
+            <div class="kpi-val">94.1%</div>
+            <div class="kpi-delta pos">▲ 목표 대비 +9.1%p</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-lbl">이상 단가 감지</div>
+            <div class="kpi-val" style="color:var(--amber)">7건</div>
+            <div class="kpi-delta neg">▲ 전월 대비 +3건</div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-row">
+          <!-- Line chart -->
+          <div class="chart-box">
+            <div class="cb-header">
+              <span class="cb-title">카테고리별 평균 단가 추이 (최근 60일)</span>
+              <span class="cb-pill">라인 차트</span>
+            </div>
+            <svg class="inline-chart" viewBox="0 0 360 110" xmlns="http://www.w3.org/2000/svg">
+              <!-- grid -->
+              <line x1="30" y1="10" x2="30" y2="95" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <line x1="30" y1="95" x2="355" y2="95" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <line x1="30" y1="70" x2="355" y2="70" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+              <line x1="30" y1="45" x2="355" y2="45" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+              <line x1="30" y1="20" x2="355" y2="20" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+              <!-- y labels -->
+              <text x="26" y="97" text-anchor="end" font-family="DM Mono, monospace" font-size="7" fill="rgba(221,232,245,0.3)">8k</text>
+              <text x="26" y="72" text-anchor="end" font-family="DM Mono, monospace" font-size="7" fill="rgba(221,232,245,0.3)">11k</text>
+              <text x="26" y="47" text-anchor="end" font-family="DM Mono, monospace" font-size="7" fill="rgba(221,232,245,0.3)">14k</text>
+              <text x="26" y="22" text-anchor="end" font-family="DM Mono, monospace" font-size="7" fill="rgba(221,232,245,0.3)">17k</text>
+              <!-- line 1: 채소류 (green) -->
+              <defs>
+                <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00D48C" stop-opacity="0.2"/>
+                  <stop offset="100%" stop-color="#00D48C" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M30,65 L60,60 L90,70 L120,55 L150,50 L180,58 L210,45 L240,50 L270,40 L300,45 L330,38 L355,42 L355,95 L30,95 Z" fill="url(#g2)"/>
+              <polyline points="30,65 60,60 90,70 120,55 150,50 180,58 210,45 240,50 270,40 300,45 330,38 355,42" fill="none" stroke="#00D48C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- line 2: 수산류 (blue) -->
+              <polyline points="30,50 60,55 90,48 120,62 150,57 180,45 210,52 240,44 270,55 300,50 330,58 355,52" fill="none" stroke="#4A9EFF" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+              <!-- line 3: 육류 (amber) -->
+              <polyline points="30,75 60,72 90,78 120,70 150,68 180,72 210,65 240,70 270,62 300,68 330,60 355,64" fill="none" stroke="#F5A623" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+              <!-- legend -->
+              <line x1="36" y1="107" x2="48" y2="107" stroke="#00D48C" stroke-width="1.5"/>
+              <text x="51" y="109" font-family="DM Mono, monospace" font-size="7" fill="rgba(221,232,245,0.5)">채소류</text>
+              <line x1="90" y1="107" x2="102" y2="107" stroke="#4A9EFF" stroke-width="1.5"/>
+              <text x="105" y="109" font-family="DM Mono, monospace" font-size="7" fill="rgba(221,232,245,0.5)">수산류</text>
+              <line x1="144" y1="107" x2="156" y2="107" stroke="#F5A623" stroke-width="1.5"/>
+              <text x="159" y="109" font-family="DM Mono, monospace" font-size="7" fill="rgba(221,232,245,0.5)">육류</text>
+            </svg>
+          </div>
+
+          <!-- Bar chart -->
+          <div class="chart-box">
+            <div class="cb-header">
+              <span class="cb-title">상위 상품 단가 순위</span>
+              <span class="cb-pill">수평 바</span>
+            </div>
+            <div class="bar-rows">
+              <div class="bar-row">
+                <span class="bar-name">한우 등심</span>
+                <div class="bar-track"><div class="bar-fill" style="width:95%;background:linear-gradient(90deg,var(--green),var(--green-bright))"></div></div>
+                <span class="bar-val" style="color:var(--green)">₩98,400</span>
+              </div>
+              <div class="bar-row">
+                <span class="bar-name">참다랑어</span>
+                <div class="bar-track"><div class="bar-fill" style="width:82%;background:var(--blue)"></div></div>
+                <span class="bar-val" style="color:var(--blue)">₩84,200</span>
+              </div>
+              <div class="bar-row">
+                <span class="bar-name">전복 (1kg)</span>
+                <div class="bar-track"><div class="bar-fill" style="width:70%;background:var(--amber)"></div></div>
+                <span class="bar-val" style="color:var(--amber)">₩72,100</span>
+              </div>
+              <div class="bar-row">
+                <span class="bar-name">삼겹살</span>
+                <div class="bar-track"><div class="bar-fill" style="width:58%;background:rgba(0,212,140,0.6)"></div></div>
+                <span class="bar-val">₩58,800</span>
+              </div>
+              <div class="bar-row">
+                <span class="bar-name">가리비</span>
+                <div class="bar-track"><div class="bar-fill" style="width:44%;background:rgba(0,212,140,0.4)"></div></div>
+                <span class="bar-val">₩44,300</span>
+              </div>
+              <div class="bar-row">
+                <span class="bar-name">감귤 (5kg)</span>
+                <div class="bar-track"><div class="bar-fill" style="width:30%;background:rgba(0,212,140,0.25)"></div></div>
+                <span class="bar-val">₩28,500</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="process-section" id="process">
+  <div class="section-eyebrow">워크플로</div>
+  <h2 class="section-title reveal">세 단계로 완성되는 수요 예측</h2>
+  <div class="process-steps">
+    <div class="proc-step reveal">
+      <div class="step-num">01</div>
+      <h3 class="step-title">단가 데이터 입력</h3>
+      <p class="step-desc">상품을 등록하고 날짜별 도매단가를 입력합니다. CSV/XLSX 대량 업로드로 기존 데이터를 빠르게 가져올 수 있습니다.</p>
+      <div class="step-tags">
+        <span class="step-tag">상품 등록</span>
+        <span class="step-tag">단가 이력</span>
+        <span class="step-tag">엑셀 업로드</span>
+      </div>
+    </div>
+    <div class="proc-step reveal reveal-d1">
+      <div class="step-num">02</div>
+      <h3 class="step-title">AI 수요 예측 실행</h3>
+      <p class="step-desc">이동평균, 지수평활, 선형회귀 등 최적 모델을 선택하고 예측 기간을 설정합니다. 95% 신뢰구간으로 불확실성을 정량화합니다.</p>
+      <div class="step-tags">
+        <span class="step-tag">모델 선택</span>
+        <span class="step-tag">기간 설정</span>
+        <span class="step-tag">신뢰구간</span>
+      </div>
+    </div>
+    <div class="proc-step reveal reveal-d2">
+      <div class="step-num">03</div>
+      <h3 class="step-title">대시보드로 의사결정</h3>
+      <p class="step-desc">KPI 카드와 분석 차트로 현황을 파악하고, 단가 급변 알림을 받습니다. 주간·월간 PDF 리포트를 자동 생성합니다.</p>
+      <div class="step-tags">
+        <span class="step-tag">KPI 모니터링</span>
+        <span class="step-tag">실시간 알림</span>
+        <span class="step-tag">PDF 리포트</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <span class="cta-eyebrow">지금 시작하기</span>
+  <h2 class="cta-title reveal">엑셀을 버리고<br><span style="color:var(--green)">데이터로 결정하세요</span></h2>
+  <p class="cta-sub reveal reveal-d1">14일 무료 체험. 신용카드 불필요.<br>100개 상품까지 즉시 무료 사용.</p>
+  <div class="cta-actions reveal reveal-d2">
+    <a href="#" class="btn btn-primary btn-lg">무료로 시작하기 →</a>
+    <a href="#" class="btn-outline-lg btn">데모 예약</a>
+  </div>
+  <div class="cta-note reveal reveal-d3">MAPE 15% 이하 보장 · HTTPS 암호화 · RBAC 접근 제어</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <span class="footer-brand">PriceFlow</span>
+    <span class="footer-copy">© 2026 PriceFlow Inc. All rights reserved.</span>
+  </div>
+  <div class="footer-links">
+    <a href="#">이용약관</a>
+    <a href="#">개인정보처리방침</a>
+    <a href="#">문서</a>
+    <a href="#">문의하기</a>
+  </div>
+</footer>
+
+<script>
+  // ── Ticker data ──────────────────────────────────────────────────
+  const tickerData = [
+    { name:'배추 10kg', price:'12,400', chg:'+2.3%', up:true },
+    { name:'삼겹살 1kg', price:'23,800', chg:'-0.8%', up:false },
+    { name:'한우 등심', price:'98,400', chg:'+1.2%', up:true },
+    { name:'고등어 1kg', price:'8,200', chg:'+4.1%', up:true },
+    { name:'쌀 20kg', price:'58,000', chg:'-1.5%', up:false },
+    { name:'대파 1kg', price:'3,400', chg:'+8.7%', up:true },
+    { name:'감귤 5kg', price:'28,500', chg:'+0.4%', up:true },
+    { name:'전복 1kg', price:'72,100', chg:'-2.1%', up:false },
+    { name:'참다랑어', price:'84,200', chg:'+3.6%', up:true },
+    { name:'가리비 1kg', price:'44,300', chg:'+1.8%', up:true },
+    { name:'돼지 목살', price:'18,600', chg:'-0.3%', up:false },
+    { name:'청경채 1kg', price:'2,800', chg:'+5.9%', up:true },
+  ];
+
+  function buildTicker() {
+    const track = document.getElementById('tickerTrack');
+    const allItems = [...tickerData, ...tickerData]; // duplicate for seamless loop
+    allItems.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'ticker-item';
+      el.innerHTML = `
+        <span class="t-name">${d.name}</span>
+        <span class="t-price">₩${d.price}</span>
+        <span class="t-chg ${d.up?'up':'dn'}">${d.up?'▲':'▼'}${d.chg}</span>
+      `;
+      track.appendChild(el);
+    });
+  }
+  buildTicker();
+
+  // ── Hero Canvas Chart ─────────────────────────────────────────────
+  (function() {
+    const canvas = document.getElementById('heroCanvas');
+    const ctx = canvas.getContext('2d');
+    const DPR = window.devicePixelRatio || 1;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width || canvas.parentElement.offsetWidth;
+      const h = Math.round(w * 0.46);
+      canvas.width = w * DPR;
+      canvas.height = h * DPR;
+      canvas.style.height = h + 'px';
+      ctx.scale(DPR, DPR);
+      return { w, h };
+    }
+
+    // Generate seeded-ish data
+    function genHistory(n, start, volatility) {
+      const data = [start];
+      for (let i = 1; i < n; i++) {
+        const drift = (Math.sin(i * 0.3) * 200 + Math.sin(i * 0.07) * 400);
+        const noise = (Math.random() - 0.49) * volatility;
+        data.push(Math.max(7000, Math.min(20000, data[i-1] + drift * 0.12 + noise)));
+      }
+      return data;
+    }
+
+    function genForecast(lastVal, n) {
+      const pts = [];
+      let val = lastVal;
+      for (let i = 0; i < n; i++) {
+        val += (Math.random() - 0.46) * 250;
+        val = Math.max(7000, Math.min(20000, val));
+        const uncertainty = (i + 1) * 180;
+        pts.push({ v: val, hi: val + uncertainty, lo: Math.max(0, val - uncertainty) });
+      }
+      return pts;
+    }
+
+    const HIST_N = 55;
+    const FORE_N = 20;
+    const hist = genHistory(HIST_N, 12400, 450);
+    const fore = genForecast(hist[hist.length-1], FORE_N);
+
+    let animProg = 0;
+    let started = false;
+    let dims = resizeCanvas();
+
+    function draw() {
+      const { w, h } = dims;
+      ctx.clearRect(0, 0, w, h);
+
+      const padL = 56, padR = 16, padT = 18, padB = 32;
+      const cW = w - padL - padR;
+      const cH = h - padT - padB;
+
+      const allVals = [...hist, ...fore.map(d=>d.hi), ...fore.map(d=>d.lo)];
+      const minV = Math.min(...allVals) * 0.94;
+      const maxV = Math.max(...allVals) * 1.06;
+      const total = HIST_N + FORE_N;
+
+      function xp(i) { return padL + (i / (total - 1)) * cW; }
+      function yp(v) { return padT + (1 - (v - minV) / (maxV - minV)) * cH; }
+
+      const histPts = Math.min(HIST_N, Math.floor(animProg * total));
+      const forePts = Math.max(0, Math.floor(animProg * total) - HIST_N);
+
+      // Grid lines
+      const gridN = 4;
+      for (let i = 0; i <= gridN; i++) {
+        const y = padT + (i / gridN) * cH;
+        const val = maxV - (i / gridN) * (maxV - minV);
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + cW, y); ctx.stroke();
+
+        ctx.fillStyle = 'rgba(221,232,245,0.3)';
+        ctx.font = `10px 'DM Mono', monospace`;
+        ctx.textAlign = 'right';
+        const k = Math.round(val / 1000);
+        ctx.fillText('₩' + k + 'k', padL - 6, y + 3.5);
+      }
+
+      // Confidence band
+      if (forePts > 0) {
+        ctx.beginPath();
+        const startX = xp(HIST_N - 1), startY = yp(hist[HIST_N - 1]);
+        ctx.moveTo(startX, startY);
+        for (let i = 0; i < forePts; i++) ctx.lineTo(xp(HIST_N + i), yp(fore[i].hi));
+        for (let i = forePts - 1; i >= 0; i--) ctx.lineTo(xp(HIST_N + i), yp(fore[i].lo));
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0,212,140,0.07)';
+        ctx.fill();
+      }
+
+      // Historical area fill
+      if (histPts > 1) {
+        const grad = ctx.createLinearGradient(0, padT, 0, padT + cH);
+        grad.addColorStop(0, 'rgba(0,212,140,0.18)');
+        grad.addColorStop(1, 'rgba(0,212,140,0)');
+        ctx.beginPath();
+        for (let i = 0; i < histPts; i++) {
+          if (i === 0) ctx.moveTo(xp(i), yp(hist[i]));
+          else ctx.lineTo(xp(i), yp(hist[i]));
+        }
+        ctx.lineTo(xp(histPts - 1), padT + cH);
+        ctx.lineTo(padL, padT + cH);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Historical line
+        ctx.beginPath();
+        for (let i = 0; i < histPts; i++) {
+          if (i === 0) ctx.moveTo(xp(i), yp(hist[i]));
+          else ctx.lineTo(xp(i), yp(hist[i]));
+        }
+        ctx.strokeStyle = '#00D48C';
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.setLineDash([]);
+        ctx.stroke();
+      }
+
+      // Forecast line (dashed amber)
+      if (forePts > 0) {
+        ctx.beginPath();
+        ctx.setLineDash([5, 4]);
+        ctx.moveTo(xp(HIST_N - 1), yp(hist[HIST_N - 1]));
+        for (let i = 0; i < forePts; i++) ctx.lineTo(xp(HIST_N + i), yp(fore[i].v));
+        ctx.strokeStyle = '#F5A623';
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Today marker
+      if (histPts >= HIST_N) {
+        const tx = xp(HIST_N - 1);
+        ctx.setLineDash([3, 4]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(tx, padT); ctx.lineTo(tx, padT + cH); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.font = `9px 'DM Mono', monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('TODAY', tx, padT - 5);
+      }
+
+      // Current price dot
+      if (histPts > 0) {
+        const lx = xp(histPts - 1), ly = yp(hist[histPts - 1]);
+        ctx.beginPath(); ctx.arc(lx, ly, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#00D48C'; ctx.fill();
+        ctx.strokeStyle = '#060E1C'; ctx.lineWidth = 2; ctx.stroke();
+
+        // price label
+        const priceLabel = '₩' + Math.round(hist[histPts - 1]).toLocaleString();
+        ctx.fillStyle = '#00D48C';
+        ctx.font = `bold 10px 'DM Mono', monospace`;
+        ctx.textAlign = 'left';
+        const lbX = lx + 8, lbY = ly - 8;
+        ctx.fillText(priceLabel, lbX < w - 60 ? lbX : lbX - 65, Math.max(padT + 12, lbY));
+      }
+
+      // X-axis date labels
+      const months = ['1월','2월','3월','4월','5월','6월'];
+      const labelInterval = Math.floor(total / 5);
+      ctx.fillStyle = 'rgba(221,232,245,0.28)';
+      ctx.font = `9px 'DM Mono', monospace`;
+      ctx.textAlign = 'center';
+      for (let i = 0; i <= 5; i++) {
+        const idx = Math.min(i * labelInterval, total - 1);
+        ctx.fillText(months[i % months.length], xp(idx), padT + cH + 16);
+      }
+
+      if (animProg < 1) {
+        animProg = Math.min(1, animProg + 0.007);
+        requestAnimationFrame(draw);
+      }
+    }
+
+    // Start on intersection
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting && !started) {
+          started = true;
+          dims = resizeCanvas();
+          draw();
+        }
+      });
+    }, { threshold: 0.2 });
+    obs.observe(canvas);
+
+    window.addEventListener('resize', () => {
+      if (started) {
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.scale(DPR, DPR);
+        dims = resizeCanvas();
+        if (animProg >= 1) draw();
+      }
+    });
+  })();
+
+  // ── Scroll Reveal ────────────────────────────────────────────────
+  const revealObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); revealObs.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+  // ── Counter Animation ─────────────────────────────────────────────
+  function animateCounter(el) {
+    const target = parseInt(el.dataset.target, 10);
+    const suffix = el.dataset.suffix || '';
+    const dur = 1800;
+    const start = performance.now();
+    function step(now) {
+      const t = Math.min((now - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      const val = Math.round(ease * target);
+      el.textContent = val.toLocaleString() + suffix;
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  const counterObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        animateCounter(e.target);
+        counterObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.counter-val').forEach(el => counterObs.observe(el));
+
+  // ── Dashboard tab switch (cosmetic) ──────────────────────────────
+  document.querySelectorAll('.db-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.db-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  // ── Sidebar item switch (cosmetic) ───────────────────────────────
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+
+  // ── Live clock ───────────────────────────────────────────────────
+  function updateClock() {
+    const el = document.querySelector('.db-time');
+    if (!el) return;
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth()+1).padStart(2,'0');
+    const d = String(now.getDate()).padStart(2,'0');
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    const ss = String(now.getSeconds()).padStart(2,'0');
+    el.textContent = `${y}-${m}-${d} | ${hh}:${mm}:${ss} KST`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+</script>
+</body>
+</html>

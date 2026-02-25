@@ -1,0 +1,25 @@
+# 환경/보안
+.tmp/
+.env
+credentials.json
+token.json
+
+# Python 빌드
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# 대용량 학습 데이터 — 로컬 보관 (GitHub 100MB 제한 초과)
+# 재학습 필요 시 로컬에서만 실행
+농넷_과거파일/
+
+# .claude (Claude Code 내부 설정)
+.claude/
+
+# 임시 백업
+data/*_backup.csv
+
+# OS
+.DS_Store
+Thumbs.db
