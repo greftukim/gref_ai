@@ -40,9 +40,9 @@ GLOBAL_CLEAN_DATA = os.path.join(BASE_DIR, "농넷_과거파일", "final_clean_d
 
 # ── 작물 설정 ──────────────────────────────────────────────────────────────────
 CROPS = {
-    'strawberry': {'id': 0, 'csv': 'strawberry_prices.csv', 'weight': 1,  'box_unit': '1kg상자'},
+    'tomato':     {'id': 0, 'csv': 'tomato_prices.csv',     'weight': 5,  'box_unit': '5kg상자'},
     'cucumber':   {'id': 1, 'csv': 'cucumber_prices.csv',   'weight': 10, 'box_unit': '10kg상자'},
-    'tomato':     {'id': 2, 'csv': 'tomato_prices.csv',     'weight': 5,  'box_unit': '5kg상자'},
+    'strawberry': {'id': 2, 'csv': 'strawberry_prices.csv', 'weight': 1,  'box_unit': '1kg상자'},
     'paprika':    {'id': 3, 'csv': 'paprika_prices.csv',    'weight': 5,  'box_unit': '5kg상자'},
 }
 
