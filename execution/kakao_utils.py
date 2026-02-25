@@ -70,14 +70,16 @@ def send_kakao_memo(message_text):
         "Authorization": f"Bearer {access_token}"
     }
     
+    full_message = f"{message_text}\n\n👉 대시보드 확인:\nhttps://greftukim.github.io/gref_ai/dashboard.html"
+
     template = {
         "object_type": "text",
-        "text": message_text,
+        "text": full_message,
         "link": {
             "web_url": "https://greftukim.github.io/gref_ai/dashboard.html",
             "mobile_web_url": "https://greftukim.github.io/gref_ai/dashboard.html"
         },
-        "button_title": "대시보드 확인"
+        "button_title": "대시보드 열기"
     }
     
     data = {

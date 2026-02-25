@@ -2468,7 +2468,6 @@
           <td style="color:${errColor}; font-family:var(--mono); font-size:12px; font-weight:600">
             ${errArrow} ${Math.abs(errVal).toLocaleString()} (${errVal > 0 ? '+' : ''}${errPct.toFixed(1)}%)
           </td>
-          <td class="td-action" onclick="deleteEntry('${id}','${d.date}')" title="삭제">✕</td>
         </tr>`;
       }).join('');
 
@@ -2551,7 +2550,7 @@
             <div style="font-size:10px; color:var(--muted); font-weight:400">(단위: 원)</div>
           </div>
           <table class="data-table">
-            <thead><tr><th>날짜</th><th>반입량(kg)</th><th>실제 도매 단가</th><th>AI 예측가</th><th>오차값(오차율)</th><th style="width:40px"></th></tr></thead>
+            <thead><tr><th>날짜</th><th>반입량(kg)</th><th>실제 도매 단가</th><th>AI 예측가</th><th>오차값(오차율)</th></tr></thead>
             <tbody>${tableRows}</tbody>
           </table>
         </div>
