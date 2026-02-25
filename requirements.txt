@@ -1,0 +1,8 @@
+requests
+pandas
+selenium
+webdriver-manager
+lightgbm
+scikit-learn
+openpyxl
+python-dotenv

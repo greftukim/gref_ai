@@ -23,13 +23,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       # ── 3. 의존성 설치 ─────────────────────────────────────────────────────
       - name: Install Python dependencies
         run: |
-          pip install --upgrade pip
-          pip install pandas selenium webdriver-manager lightgbm scikit-learn openpyxl
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       # ── 4. Chrome 설치 (nongnet_crawler Selenium용) ────────────────────────
       - name: Set up Chrome
