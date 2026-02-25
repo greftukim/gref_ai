@@ -24,6 +24,11 @@ import subprocess
 import argparse
 from datetime import datetime, timedelta
 
+try:
+    from execution import kakao_utils
+except ImportError:
+    import kakao_utils
+
 # ── 경로 설정 (크로스플랫폼) ──────────────────────────────────────────────────
 BASE_DIR        = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXEC_DIR        = os.path.join(BASE_DIR, "execution")
@@ -237,6 +242,27 @@ def generate_prices_json():
     print(f"  today   = {today_str}")
     print(f"  crops   = {list(historical.keys())}")
     print(f"  size    = {size_kb:.0f} KB")
+
+    # ── 가격 급등락 알림 (카카오톡) ───────────────────────────────────────────
+    try:
+        notify_list = []
+        for name, hists in historical.items():
+            if len(hists) < 2: continue
+            curr = hists[-1]['price']
+            prev = hists[-2]['price']
+            change_pct = (curr - prev) / prev * 100
+            
+            if abs(change_pct) >= 10: # 10% 이상 변동 시
+                direction = "상승" if change_pct > 0 else "하락"
+                notify_list.append(f"· {name}: {curr:,}원 ({direction} {abs(change_pct):.1f}%)")
+        
+        if notify_list:
+            msg = f"[GREF AI 가격 알림]\n오늘 주요 품목의 단가가 크게 변동되었습니다.\n\n" + "\n".join(notify_list)
+            print("\n[INFO] 카카오톡 알림 전송 시도...")
+            kakao_utils.send_kakao_memo(msg)
+    except Exception as e:
+        print(f"[WARN] 카카오 알림 실패: {e}")
+
     return True
 
 

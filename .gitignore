@@ -3,6 +3,8 @@
 .env
 credentials.json
 token.json
+kakao_token.json
+execution/kakao_token.json
 
 # Python 빌드
 __pycache__/

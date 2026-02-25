@@ -47,6 +47,10 @@ jobs:
 
       # ── 6. prices.json 생성 (모델 학습 건너뜀 — 기존 예측 재사용) ──────────
       - name: Generate prices.json
+        env:
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
         run: python execution/main_update.py --skip-train
 
       # ── 7. 변경사항 커밋 & 푸시 ───────────────────────────────────────────
