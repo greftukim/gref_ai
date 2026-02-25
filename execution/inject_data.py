@@ -27,9 +27,9 @@ GLOBAL_CLEAN_DATA = os.path.join(BASE_DIR, "농넷_과거파일", "final_clean_d
 
 # ── 작물 설정 ──────────────────────────────────────────────────────────────
 CROPS = {
-    'tomato':     {'id': 0, 'csv': 'tomato_prices.csv',     'weight': 5,  'box_unit': '5kg상자'},
+    'strawberry': {'id': 0, 'csv': 'strawberry_prices.csv', 'weight': 1,  'box_unit': '1kg상자'},
     'cucumber':   {'id': 1, 'csv': 'cucumber_prices.csv',   'weight': 10, 'box_unit': '10kg상자'},
-    'strawberry': {'id': 2, 'csv': 'strawberry_prices.csv', 'weight': 1,  'box_unit': '1kg상자'},
+    'tomato':     {'id': 2, 'csv': 'tomato_prices.csv',     'weight': 5,  'box_unit': '5kg상자'},
     'paprika':    {'id': 3, 'csv': 'paprika_prices.csv',    'weight': 5,  'box_unit': '5kg상자'},
 }
 
@@ -100,8 +100,7 @@ def generate():
                 p_val = float(r.get('price_per_kg', r.get('avg_price', 0)))
                 v_val = float(r.get('volume', 0))
                 if d not in daily_map: daily_map[d] = {'p_sum': 0, 'count': 0, 'v_sum': 0}
-                daily_map[d]['p_sum'] += p_val
-                daily_map[d]['count'] += 1
+                daily_map[d]['p_sum'] += p_val * v_val  # volume-weighted sum
                 daily_map[d]['v_sum'] += v_val
             except (ValueError, TypeError): continue
         
@@ -129,7 +128,7 @@ def generate():
         
         for d in recent_dates:
             data = daily_map[d]
-            avg_p = data['p_sum'] / data['count']
+            avg_p = data['p_sum'] / max(data['v_sum'], 1)  # volume-weighted average
             hist_list.append({
                 "date":      d,
                 "price":     int(round(avg_p)),
