@@ -100,8 +100,13 @@ def generate():
                 p_val = float(r.get('price_per_kg', r.get('avg_price', 0)))
                 v_val = float(r.get('volume', 0))
                 if d not in daily_map: daily_map[d] = {'p_sum': 0, 'count': 0, 'v_sum': 0}
-                daily_map[d]['p_sum'] += p_val * v_val  # volume-weighted sum
-                daily_map[d]['v_sum'] += v_val
+                if v_val > 0:
+                    daily_map[d]['p_sum'] += p_val * v_val  # volume-weighted sum
+                    daily_map[d]['v_sum'] += v_val
+                else:
+                    # volume 정보 없는 경우 단순 합산 (count 기반)
+                    daily_map[d]['p_sum'] += p_val
+                    daily_map[d]['count'] += 1
             except (ValueError, TypeError): continue
         
         # 2. 개별 CSV(최신 데이터) 로드 및 병합
@@ -114,8 +119,8 @@ def generate():
                 try:
                     p_val = float(r.get('price_per_kg', r.get('avg_price', 0)))
                     v_val = float(r.get('volume', 0))
-                    # 최신 파일 데이터로 덮어쓰거나(보통 이쪽이 더 정확) 합침. 여기서는 덮어씀.
-                    daily_map[d] = {'p_sum': p_val, 'count': 1, 'v_sum': v_val}
+                    # 최신 파일 데이터로 덮어쓰기 (volume-weighted 형식 동일하게)
+                    daily_map[d] = {'p_sum': p_val * max(v_val, 1), 'count': 1, 'v_sum': max(v_val, 1)}
                 except: continue
 
         # 3. 정렬 및 최근 HISTORY_DAYS일 추출
@@ -128,7 +133,11 @@ def generate():
         
         for d in recent_dates:
             data = daily_map[d]
-            avg_p = data['p_sum'] / max(data['v_sum'], 1)  # volume-weighted average
+            # volume-weighted 또는 count 기반 평균 계산
+            if data['v_sum'] > 0:
+                avg_p = data['p_sum'] / data['v_sum']
+            else:
+                avg_p = data['p_sum'] / max(data['count'], 1)
             hist_list.append({
                 "date":      d,
                 "price":     int(round(avg_p)),

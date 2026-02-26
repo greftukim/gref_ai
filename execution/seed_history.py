@@ -5,11 +5,22 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 HIST_FILE = os.path.join(BASE_DIR, "농넷_과거파일", "final_clean_dataset.csv")
 
+# final_clean_dataset.csv 의 item 컬럼 값과 매핑
+# merge_historical.py 의 CROP_ID_MAP 과 반드시 일치해야 함:
+#   '0' → strawberry, '1' → cucumber, '2' → tomato, '3' → paprika
 CROPS = {
-    'strawberry': 2,
-    'cucumber':   1,
-    'tomato':     0,
-    'paprika':    3,
+    'strawberry': 0,   # item=0 → 딸기
+    'cucumber':   1,   # item=1 → 오이
+    'tomato':     2,   # item=2 → 토마토
+    'paprika':    3,   # item=3 → 파프리카
+}
+
+# 각 작물의 올바른 박스 단위 (merge_historical.py 의 CROP_CFG 와 일치)
+BOX_UNITS = {
+    'strawberry': '1kg상자',
+    'cucumber':   '10kg상자',
+    'tomato':     '5kg상자',
+    'paprika':    '5kg상자',
 }
 
 def seed():
@@ -34,40 +45,47 @@ def seed():
         if df_item_hist.empty:
             print(f"[Warn] {name} (id:{item_id}) 에 대한 과거 데이터가 없습니다.")
             continue
-            
-        # 과거 데이터의 컬럼 이름을 data/*.csv 형식에 맞게 조정 (필수 컬럼 위주)
-        # DATE, avg_price, max_price, min_price, volume, unit, price_per_kg
-        df_item_hist = df_item_hist.rename(columns={
-            'date': 'DATE',
-            'price_per_kg': 'price_per_kg', # 이미 동일할 가능성 높음
-            'volume': 'volume'
-        })
-        
-        # avg_price가 없고 price_per_kg만 있는 경우 채워줌 (단위 1kg 기준)
-        if 'avg_price' not in df_item_hist.columns:
-            df_item_hist['avg_price'] = df_item_hist['price_per_kg']
-        
-        # 2. 현재 data/*.csv 로드
+
+        # 날짜별로 price_per_kg 평균, volume 합산 집계
+        df_item_hist = df_item_hist.rename(columns={'date': 'DATE'})
+        df_agg = df_item_hist.groupby('DATE').agg(
+            price_per_kg=('price_per_kg', 'mean'),
+            volume=('volume', 'sum'),
+        ).reset_index()
+
+        # avg_price = price_per_kg (단위 1kg 기준으로 저장, merge_historical 에서 박스 환산)
+        df_agg['avg_price'] = df_agg['price_per_kg'].round(2)
+        df_agg['price_per_kg'] = df_agg['price_per_kg'].round(2)
+        df_agg['volume'] = df_agg['volume'].round(1)
+        # 올바른 박스 단위 설정
+        df_agg['unit'] = BOX_UNITS[name]
+
+        # 2. 현재 data/*.csv 로드 후 병합
+        # - CUTOFF_DATE 이전: final_clean_dataset.csv 데이터로 완전 대체
+        # - CUTOFF_DATE 이후: 기존 크롤러 데이터 우선 보존
+        CUTOFF_DATE = '2026-01-01'
         if os.path.exists(csv_path):
             df_curr = pd.read_csv(csv_path)
             df_curr['DATE'] = pd.to_datetime(df_curr['DATE']).dt.strftime('%Y-%m-%d')
-            
-            # 병합 및 중복 제거
-            df_combined = pd.concat([df_item_hist, df_curr], ignore_index=True)
+            # 최신 크롤러 데이터(CUTOFF 이후)만 보존
+            df_curr_recent = df_curr[df_curr['DATE'] >= CUTOFF_DATE].copy()
+            # 과거 데이터는 seed 데이터 우선, 최신 크롤러 데이터를 그 뒤에 추가
+            df_combined = pd.concat([df_agg, df_curr_recent], ignore_index=True)
             df_combined = df_combined.drop_duplicates(subset=['DATE'], keep='last')
         else:
-            df_combined = df_item_hist
-            
+            df_combined = df_agg
+
         # 3. 날짜순 정렬 후 저장
-        df_combined = df_combined.sort_values('DATE')
-        
-        # 필요한 주요 컬럼만 유지 (너무 많은 컬럼 방지)
-        cols = ['DATE', 'avg_price', 'volume', 'price_per_kg']
-        # 기존 파일에 있던 다른 컬럼들도 최대한 유지
-        all_cols = [c for c in df_combined.columns if c in ['DATE', 'avg_price', 'max_price', 'min_price', 'volume', 'unit', 'price_per_kg']]
-        
-        df_combined[all_cols].to_csv(csv_path, index=False, encoding='utf-8-sig')
-        print(f"[OK] {name}: {len(df_combined)} 건의 데이터가 저장되었습니다.")
+        df_combined = df_combined.sort_values('DATE').reset_index(drop=True)
+
+        # 필요 컬럼만 유지
+        keep_cols = [c for c in ['DATE', 'unit', 'avg_price', 'price_per_kg', 'volume', 'max_price', 'min_price']
+                     if c in df_combined.columns]
+
+        df_combined[keep_cols].to_csv(csv_path, index=False, encoding='utf-8-sig')
+        hist_count = len(df_agg)
+        recent_count = len(df_combined) - hist_count
+        print(f"[OK] {name} (item={item_id}): 과거 {hist_count}건 + 최신 {recent_count}건 = 총 {len(df_combined)}건 저장 → {csv_path}")
 
 if __name__ == "__main__":
     seed()
