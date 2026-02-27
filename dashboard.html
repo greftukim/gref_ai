@@ -536,7 +536,11 @@
       opacity: 0.75;
       letter-spacing: 0;
     }
-    .nongnet-link:hover { text-decoration: underline; opacity: 1; }
+
+    .nongnet-link:hover {
+      text-decoration: underline;
+      opacity: 1;
+    }
 
     .chart-pills {
       display: flex;
@@ -588,10 +592,23 @@
       transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
     }
 
-    .fc-card.fc-up { border-left: 3px solid var(--green); }
-    .fc-card.fc-dn { border-left: 3px solid var(--red); }
-    .fc-card.fc-up.expanded { border-left-color: #56d36c; box-shadow: 0 4px 16px rgba(46,125,50,0.18); }
-    .fc-card.fc-dn.expanded { border-left-color: #ff6060; box-shadow: 0 4px 16px rgba(211,47,47,0.18); }
+    .fc-card.fc-up {
+      border-left: 3px solid var(--green);
+    }
+
+    .fc-card.fc-dn {
+      border-left: 3px solid var(--red);
+    }
+
+    .fc-card.fc-up.expanded {
+      border-left-color: #56d36c;
+      box-shadow: 0 4px 16px rgba(46, 125, 50, 0.18);
+    }
+
+    .fc-card.fc-dn.expanded {
+      border-left-color: #ff6060;
+      box-shadow: 0 4px 16px rgba(211, 47, 47, 0.18);
+    }
 
     .fc-header {
       display: flex;
@@ -603,7 +620,10 @@
       user-select: none;
     }
 
-    .fc-header-left { flex: 1; min-width: 0; }
+    .fc-header-left {
+      flex: 1;
+      min-width: 0;
+    }
 
     .fc-label {
       font-size: 9px;
@@ -614,8 +634,13 @@
       margin-bottom: 4px;
     }
 
-    .fc-card.fc-up .fc-label { color: var(--green); }
-    .fc-card.fc-dn .fc-label { color: var(--red); }
+    .fc-card.fc-up .fc-label {
+      color: var(--green);
+    }
+
+    .fc-card.fc-dn .fc-label {
+      color: var(--red);
+    }
 
     .fc-headline {
       font-size: 12px;
@@ -665,9 +690,19 @@
     }
 
     /* 주차별 % 수치 색상 */
-    .fc-pct-up   { color: var(--green); font-weight: 700; }
-    .fc-pct-dn   { color: var(--red);   font-weight: 700; }
-    .fc-pct-flat { color: var(--muted); }
+    .fc-pct-up {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .fc-pct-dn {
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .fc-pct-flat {
+      color: var(--muted);
+    }
 
     .fc-duration {
       font-size: 12px;
@@ -689,18 +724,33 @@
 
     /* ── CHART ANIMATION ── */
     @keyframes fcMaskReveal {
-      from { transform: scaleX(1); }
-      to   { transform: scaleX(0); }
+      from {
+        transform: scaleX(1);
+      }
+
+      to {
+        transform: scaleX(0);
+      }
     }
 
     @keyframes chartCanvasEnter {
-      from { opacity: 0.15; transform: translateY(7px); }
-      to   { opacity: 1;    transform: translateY(0);   }
+      from {
+        opacity: 0.15;
+        transform: translateY(7px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .chart-reveal-mask {
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       background: var(--surface);
       z-index: 6;
       pointer-events: none;
@@ -1427,7 +1477,8 @@
         <span style="font-size:12px; color:var(--dim)">조회/예측 기간(7~180일):</span>
         <input type="number" id="period-input" class="custom-input" min="7" max="180" value="30">
         <button class="apply-btn" onclick="applyPeriod()">적용</button>
-        <span id="topbar-update-date" style="font-size:11px; color:var(--muted); margin-left:10px; white-space:nowrap; opacity:0.8"></span>
+        <span id="topbar-update-date"
+          style="font-size:11px; color:var(--muted); margin-left:10px; white-space:nowrap; opacity:0.8"></span>
       </div>
       <div class="topbar-spacer"></div>
     </div>
@@ -32435,7 +32486,7 @@
     const FORECAST_DAYS = 14;
     const LS_KEY = 'priceflow_v2';
     // 당일 기준 날짜 — inject_data.py 주입 또는 시스템 날짜 사용
-    const TODAY = (typeof INJECTED_TODAY !== 'undefined' && INJECTED_TODAY !== null) ? INJECTED_TODAY : new Date().toISOString().split('T')[0];
+    let TODAY = (typeof INJECTED_TODAY !== 'undefined' && INJECTED_TODAY !== null) ? INJECTED_TODAY : new Date().toISOString().split('T')[0];
 
     // ═══════════════════════════════════════════════════════════
     // STATE
@@ -32548,6 +32599,7 @@
       fetch('./data/prices.json?v=' + Date.now())
         .then(r => r.json())
         .then(json => {
+          if (json.today) TODAY = json.today;
           INJECTED_HISTORICAL = json.historical || {};
           INJECTED_FORECAST = json.forecast || null;
           INJECTED_MODEL_PERF = json.model_performance || null;
@@ -32556,6 +32608,7 @@
           state.tftData = INJECTED_FORECAST;
           state.modelPerf = INJECTED_MODEL_PERF;
           saveData();
+          updateTopbarDate();
           render();
           console.log('[fetch] prices.json 로드 완료 — today:', json.today, '| updated:', json.last_updated);
         })
@@ -32973,7 +33026,7 @@
       for (let w = 0; w < maxWeeks; w++) {
         const slice = forecastArr.slice(w * 7, (w + 1) * 7);
         if (slice.length < 3) break;
-        const avg = slice.reduce(function(s, f) { return s + f.price; }, 0) / slice.length;
+        const avg = slice.reduce(function (s, f) { return s + f.price; }, 0) / slice.length;
         const changePct = (avg - baseline) / baseline * 100;
         weeks.push({
           week: w + 1,
@@ -32997,7 +33050,7 @@
 
       // 상승 구간 탐색
       var inSeg = false, cur = [];
-      weeks.forEach(function(w) {
+      weeks.forEach(function (w) {
         if (!inSeg && w.changePct >= entryThresh) {
           inSeg = true; cur = [w];
         } else if (inSeg && w.changePct >= exitThresh) {
@@ -33011,7 +33064,7 @@
 
       // 하락 구간 탐색
       inSeg = false; cur = [];
-      weeks.forEach(function(w) {
+      weeks.forEach(function (w) {
         if (!inSeg && w.changePct <= -entryThresh) {
           inSeg = true; cur = [w];
         } else if (inSeg && w.changePct <= -exitThresh) {
@@ -33033,20 +33086,20 @@
       if (!foreArr || foreArr.length < 14) return null;
 
       // 기준값: TODAY 기준 AI 예측가 시작값 (점선 시작점)
-      var sortedFore = foreArr.slice().sort(function(a, b) { return a.date.localeCompare(b.date); });
-      var baseEntry = sortedFore.find(function(f) { return f.date >= TODAY; });
+      var sortedFore = foreArr.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
+      var baseEntry = sortedFore.find(function (f) { return f.date >= TODAY; });
       var baseline = baseEntry ? baseEntry.price : (foreArr[0] ? foreArr[0].price : 1);
 
       // TODAY 이후 예측 데이터만 사용
-      var futureArr = foreArr.filter(function(f) { return f.date > TODAY; });
+      var futureArr = foreArr.filter(function (f) { return f.date > TODAY; });
       if (futureArr.length < 7) return null;
 
       var weeks = weeklyBins(futureArr, baseline);
       if (weeks.length < 2) return null;
 
       var segs = detectTrendSegments(weeks);
-      var nearestUp = segs.upSegs.sort(function(a, b) { return a[0].week - b[0].week; })[0] || null;
-      var nearestDn = segs.dnSegs.sort(function(a, b) { return a[0].week - b[0].week; })[0] || null;
+      var nearestUp = segs.upSegs.sort(function (a, b) { return a[0].week - b[0].week; })[0] || null;
+      var nearestDn = segs.dnSegs.sort(function (a, b) { return a[0].week - b[0].week; })[0] || null;
 
       return { weeks: weeks, nearestUp: nearestUp, nearestDn: nearestDn, baseline: baseline };
     }
@@ -33080,8 +33133,8 @@
       var p = PRODUCTS[productId];
       var productName = p ? p.name.split('(')[0] : '해당 품목';
 
-      var lyStart    = shiftDateYear(seg[0].startDate, -1);
-      var lySegEnd   = shiftDateYear(seg[seg.length - 1].endDate, -1);
+      var lyStart = shiftDateYear(seg[0].startDate, -1);
+      var lySegEnd = shiftDateYear(seg[seg.length - 1].endDate, -1);
       // 패턴 회복/하락 추적을 위해 3주 더 보기
       var lyEnd = shiftDateYear(
         new Date(new Date(seg[seg.length - 1].endDate).getTime() + 21 * 86400000)
@@ -33090,12 +33143,12 @@
       );
 
       var basisStartYM = fmtYM(lyStart);
-      var basisEndYM   = fmtYM(lySegEnd);
+      var basisEndYM = fmtYM(lySegEnd);
 
       var sorted = (state.data[productId] || []).slice()
-        .sort(function(a, b) { return a.date.localeCompare(b.date); });
+        .sort(function (a, b) { return a.date.localeCompare(b.date); });
 
-      var rangeData = sorted.filter(function(d) {
+      var rangeData = sorted.filter(function (d) {
         return d.date >= lyStart && d.date <= lyEnd && d.price && d.price > 0;
       });
 
@@ -33104,7 +33157,7 @@
         return '📊 작년 동기(' + basisStartYM + ' ~ ' + basisEndYM + ') 실제 단가 흐름을 기반으로 예측한 구간입니다.';
       }
 
-      var prices = rangeData.map(function(d) { return d.price; });
+      var prices = rangeData.map(function (d) { return d.price; });
       var startPrice = prices[0];
 
       // 극값(최고/최저) 찾기
@@ -33122,8 +33175,8 @@
       var sustainedWeeks = Math.round(sustainedDays / 7);
 
       // 원 단위 표시 (100원 단위 반올림)
-      var rnd = function(n) { return Math.round(n / 100) * 100; };
-      var won = function(n) { return rnd(n).toLocaleString() + '원'; };
+      var rnd = function (n) { return Math.round(n / 100) * 100; };
+      var won = function (n) { return rnd(n).toLocaleString() + '원'; };
 
       var text = '작년 시점(' + basisStartYM + ' ~ ' + basisEndYM + ') '
         + productName + ' 단가는 약 ' + won(startPrice) + '에서 시작해 ';
@@ -33169,9 +33222,9 @@
           : (startWeek + '주 후 단가 ' + (isUp ? '상승' : '하락') + ' 구간 시작 예정');
 
         var segWeekNums = {};
-        seg.forEach(function(w) { segWeekNums[w.week] = true; });
+        seg.forEach(function (w) { segWeekNums[w.week] = true; });
 
-        var ratesHtml = result.weeks.map(function(w) {
+        var ratesHtml = result.weeks.map(function (w) {
           var sign = w.changePct >= 0 ? '+' : '';
           var inSeg = !!segWeekNums[w.week];
           var pctCls = w.changePct > 1 ? 'fc-pct-up' : w.changePct < -1 ? 'fc-pct-dn' : 'fc-pct-flat';
@@ -33227,9 +33280,9 @@
     function detectChartTrends(histData, allDates, basePrice) {
       if (!histData || histData.length < 21) return [];
 
-      var inView = histData.filter(function(d) {
+      var inView = histData.filter(function (d) {
         return d.date <= TODAY && allDates.indexOf(d.date) !== -1 && d.price > 0;
-      }).slice().sort(function(a, b) { return a.date < b.date ? -1 : 1; });
+      }).slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
 
       if (inView.length < 21) return [];
 
@@ -33238,7 +33291,7 @@
       for (var i = 0; i + 3 < inView.length; i += 7) {
         var slice = inView.slice(i, i + 7);
         if (slice.length < 4) break;
-        var avg = slice.reduce(function(s, d) { return s + d.price; }, 0) / slice.length;
+        var avg = slice.reduce(function (s, d) { return s + d.price; }, 0) / slice.length;
         var startDate = slice[0].date;
         var endDate = slice[slice.length - 1].date;
         var si = allDates.indexOf(startDate);
@@ -33310,7 +33363,7 @@
           }
         }
       };
-      (trendSegs || []).forEach(function(seg, i) {
+      (trendSegs || []).forEach(function (seg, i) {
         var isUp = seg.dir > 0;
         ann['trend_' + i] = {
           type: 'line',
@@ -34009,7 +34062,7 @@
             <div class="chart-header">
               <div class="chart-title" style="color: var(--text); display:flex; align-items:baseline; flex-wrap:wrap; gap:4px">
                 <span>${p.emoji} ${p.name} — 단가 추이 <span style="color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 4px">(${p.unit})</span></span>
-                ${(u => u ? `<a class="nongnet-link" href="${u}" target="_blank" rel="noopener">🔗 농넷 바로가기</a>` : '')({'tomato':'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=080303','cucumber':'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=0901','paprika':'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=132606','strawberry':'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=080413'}[id])}
+                ${(u => u ? `<a class="nongnet-link" href="${u}" target="_blank" rel="noopener">🔗 농넷 바로가기</a>` : '')({ 'tomato': 'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=080303', 'cucumber': 'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=0901', 'paprika': 'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=132606', 'strawberry': 'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=080413' }[id])}
               </div>
             </div>
             <div class="chart-canvas-wrap"><canvas id="detail-chart" height="300"></canvas></div>
@@ -34716,14 +34769,20 @@
     state.data = loadData();
     render();
 
-    // 업데이트 날짜 표시
-    (function() {
-      var _updStr = (typeof INJECTED_MODEL_PERF !== 'undefined' && INJECTED_MODEL_PERF && INJECTED_MODEL_PERF.last_updated)
-        ? INJECTED_MODEL_PERF.last_updated.slice(0, 10).replace(/-/g, '.')
-        : TODAY.replace(/-/g, '.');
-      var el = document.getElementById('topbar-update-date');
+    // 업데이트 날짜 표시 함수
+    function updateTopbarDate() {
+      // INJECTED_MODEL_PERF 또는 state.modelPerf에서 최신 업데이트 시각 추출
+      const perf = state.modelPerf || (typeof INJECTED_MODEL_PERF !== 'undefined' ? INJECTED_MODEL_PERF : null);
+      let _updStr = TODAY.replace(/-/g, '.');
+      if (perf && perf.last_updated) {
+        _updStr = perf.last_updated.slice(0, 10).replace(/-/g, '.');
+      }
+      const el = document.getElementById('topbar-update-date');
       if (el) el.textContent = '기준일: ' + _updStr;
-    })();
+    }
+
+    // 초기 실행
+    updateTopbarDate();
   </script>
 </body>
 

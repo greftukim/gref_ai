@@ -52,11 +52,15 @@ jobs:
           KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
         run: python execution/main_update.py --skip-train
 
-      # ── 7. 변경사항 커밋 & 푸시 ───────────────────────────────────────────
+      # ── 7. dashboard.html 데이터 주입 (최신 데이터 정적 반영) ────────────────
+      - name: Inject data into dashboard.html
+        run: python execution/inject_data.py
+
+      # ── 8. 변경사항 커밋 & 푸시 ───────────────────────────────────────────
       - name: Commit and push updated data
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/prices.json data/*.csv
+          git add data/prices.json data/*.csv dashboard.html
           git diff --staged --quiet || git commit -m "chore: 데이터 자동 업데이트 $(date +'%Y-%m-%d') [skip ci]"
           git push
