@@ -527,6 +527,17 @@
       letter-spacing: -0.2px;
     }
 
+    .nongnet-link {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--green);
+      text-decoration: none;
+      margin-left: 12px;
+      opacity: 0.75;
+      letter-spacing: 0;
+    }
+    .nongnet-link:hover { text-decoration: underline; opacity: 1; }
+
     .chart-pills {
       display: flex;
       gap: 6px;
@@ -551,6 +562,154 @@
 
     .chart-canvas-wrap {
       position: relative;
+    }
+
+    /* ── FORECAST COMMENT OVERLAY ── */
+    #forecast-comment-box {
+      position: absolute;
+      top: 14px;
+      right: 12px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 300px;
+      max-width: 420px;
+      width: max-content;
+    }
+
+    .fc-card {
+      background: rgba(250, 249, 246, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+      transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+
+    .fc-card.fc-up { border-left: 3px solid var(--green); }
+    .fc-card.fc-dn { border-left: 3px solid var(--red); }
+    .fc-card.fc-up.expanded { border-left-color: #56d36c; box-shadow: 0 4px 16px rgba(46,125,50,0.18); }
+    .fc-card.fc-dn.expanded { border-left-color: #ff6060; box-shadow: 0 4px 16px rgba(211,47,47,0.18); }
+
+    .fc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 13px 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .fc-header-left { flex: 1; min-width: 0; }
+
+    .fc-label {
+      font-size: 9px;
+      font-weight: 700;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .fc-card.fc-up .fc-label { color: var(--green); }
+    .fc-card.fc-dn .fc-label { color: var(--red); }
+
+    .fc-headline {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fc-chevron {
+      font-size: 15px;
+      color: var(--muted);
+      transition: transform 0.3s ease-in-out, color 0.3s ease-in-out;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .fc-card.expanded .fc-chevron {
+      transform: rotate(90deg);
+      color: var(--dim);
+    }
+
+    .fc-body {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      padding: 0 20px;
+      transition: max-height 0.35s ease-in-out, opacity 0.25s ease-in-out, padding 0.35s ease-in-out;
+    }
+
+    .fc-card.expanded .fc-body {
+      max-height: 560px;
+      opacity: 1;
+      padding: 0 20px 18px;
+    }
+
+    .fc-rates {
+      font-size: 12.5px;
+      font-family: var(--mono);
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      line-height: 1.7;
+    }
+
+    /* 주차별 % 수치 색상 */
+    .fc-pct-up   { color: var(--green); font-weight: 700; }
+    .fc-pct-dn   { color: var(--red);   font-weight: 700; }
+    .fc-pct-flat { color: var(--muted); }
+
+    .fc-duration {
+      font-size: 12px;
+      color: var(--dim);
+      font-weight: 600;
+      padding-top: 10px;
+      margin-top: 2px;
+      border-top: 1px solid var(--border);
+    }
+
+    .fc-basis {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-top: 11px;
+      border-top: 1px dashed var(--border);
+      padding-top: 9px;
+    }
+
+    /* ── CHART ANIMATION ── */
+    @keyframes fcMaskReveal {
+      from { transform: scaleX(1); }
+      to   { transform: scaleX(0); }
+    }
+
+    @keyframes chartCanvasEnter {
+      from { opacity: 0.15; transform: translateY(7px); }
+      to   { opacity: 1;    transform: translateY(0);   }
+    }
+
+    .chart-reveal-mask {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--surface);
+      z-index: 6;
+      pointer-events: none;
+      transform-origin: right center;
+      animation: fcMaskReveal 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    canvas.chart-entering {
+      animation: chartCanvasEnter 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
     /* Legend */
@@ -1268,6 +1427,7 @@
         <span style="font-size:12px; color:var(--dim)">조회/예측 기간(7~180일):</span>
         <input type="number" id="period-input" class="custom-input" min="7" max="180" value="30">
         <button class="apply-btn" onclick="applyPeriod()">적용</button>
+        <span id="topbar-update-date" style="font-size:11px; color:var(--muted); margin-left:10px; white-space:nowrap; opacity:0.8"></span>
       </div>
       <div class="topbar-spacer"></div>
     </div>
@@ -32691,6 +32851,11 @@
         charts.comp = null;
       }
 
+      // 추세 화살표 + TODAY 어노테이션 빌드
+      const _bp = (dataMap[activeId] && dataMap[activeId][0]) ? dataMap[activeId][0].price : 1;
+      const _trendSegs = detectChartTrends(state.data[activeId] || [], allDates, _bp);
+      const _chartAnnotations = buildChartAnnotations(todayIdx, _trendSegs);
+
       if (charts.comp) {
         charts.comp.data.labels = allDates;
         charts.comp.data.datasets = datasets;
@@ -32700,17 +32865,10 @@
         charts.comp.options.scales.y.max = compMax;
         charts.comp.options.scales.yVol.max = maxVol * 4;
 
-        // Update annotation
-        if (charts.comp.options.plugins.annotation.annotations.todayLine) {
-          const showLine = todayIdx !== -1;
-          charts.comp.options.plugins.annotation.annotations.todayLine.display = showLine;
-          if (showLine) {
-            charts.comp.options.plugins.annotation.annotations.todayLine.xMin = todayIdx;
-            charts.comp.options.plugins.annotation.annotations.todayLine.xMax = todayIdx;
-          }
-        }
+        // 어노테이션 전체 교체 (추세 화살표 + TODAY 라인)
+        charts.comp.options.plugins.annotation.annotations = _chartAnnotations;
 
-        charts.comp.update('none'); // Update without animation for smoothness
+        charts.comp.update('none');
       } else {
         charts.comp = new Chart(ctx.getContext('2d'), {
           type: 'line',
@@ -32718,10 +32876,7 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            animation: {
-              duration: 1000,
-              easing: 'easeOutQuart'
-            },
+            animation: { duration: 0 },
             interaction: { intersect: false, mode: 'index' },
             scales: {
               x: {
@@ -32758,25 +32913,7 @@
             },
             plugins: {
               annotation: {
-                annotations: {
-                  todayLine: {
-                    type: 'line',
-                    xMin: todayIdx,
-                    xMax: todayIdx,
-                    display: todayIdx !== -1,
-                    borderColor: '#003d38',
-                    borderWidth: 2,
-                    label: {
-                      display: true,
-                      content: 'TODAY',
-                      position: 'start',
-                      backgroundColor: '#003d38',
-                      color: '#c8ff64',
-                      font: { size: 9, weight: '900' },
-                      padding: { x: 6, y: 3 }
-                    }
-                  }
-                }
+                annotations: _chartAnnotations
               }
             }
           }
@@ -32790,6 +32927,411 @@
           return `<div class="legend-item"><div class="legend-swatch" style="background:${p.color}"></div>${p.name}</div>`;
         }).join('') + (state.showForecast ? `<div class="legend-item"><div class="legend-swatch" style="background:repeating-linear-gradient(90deg,rgba(0,0,0,0.3) 0,rgba(0,0,0,0.3) 4px,transparent 4px,transparent 7px)"></div>예측가 (점선)</div>` : '');
       }
+
+      // ── 차트 등장 애니메이션 (마스크 좌→우 슬라이드 + canvas fadeInUp) ──
+      const wrap = ctx.parentElement;
+      if (wrap) {
+        // 기존 마스크 제거
+        const oldMask = wrap.querySelector('.chart-reveal-mask');
+        if (oldMask) oldMask.remove();
+
+        // canvas 진입 애니메이션 재실행
+        ctx.classList.remove('chart-entering');
+        void ctx.offsetWidth; // reflow
+        ctx.classList.add('chart-entering');
+
+        // 마스크 생성 & 애니메이션
+        const mask = document.createElement('div');
+        mask.className = 'chart-reveal-mask';
+        wrap.appendChild(mask);
+        mask.addEventListener('animationend', function () { mask.remove(); }, { once: true });
+      }
+
+      // TODAY 구분선: 마스크 완료(1.2s) 후 등장
+      const _chartRef = charts.comp;
+      const _todayIdx = todayIdx;
+      setTimeout(function () {
+        if (_chartRef && _chartRef.options.plugins.annotation.annotations.todayLine) {
+          _chartRef.options.plugins.annotation.annotations.todayLine.display = _todayIdx !== -1;
+          _chartRef.update('none');
+        }
+      }, 1300);
+
+      // 예측 코멘트 갱신 (품목 변경 시 자동 반영)
+      buildForecastComment(activeId);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // FORECAST TREND ANALYSIS
+    // ═══════════════════════════════════════════════════════════
+
+    // 일별 예측 배열을 7일 단위 주간 평균으로 집계
+    // baseline 대비 누적 변화율(%) 반환, 각 주의 날짜 범위 포함
+    function weeklyBins(forecastArr, baseline, maxWeeks) {
+      maxWeeks = maxWeeks || 8;
+      const weeks = [];
+      for (let w = 0; w < maxWeeks; w++) {
+        const slice = forecastArr.slice(w * 7, (w + 1) * 7);
+        if (slice.length < 3) break;
+        const avg = slice.reduce(function(s, f) { return s + f.price; }, 0) / slice.length;
+        const changePct = (avg - baseline) / baseline * 100;
+        weeks.push({
+          week: w + 1,
+          avg: Math.round(avg),
+          changePct: +changePct.toFixed(1),
+          startDate: slice[0].date,
+          endDate: slice[slice.length - 1].date
+        });
+      }
+      return weeks;
+    }
+
+    // 주간 변화율 배열에서 임계치 초과 지속 구간 탐색
+    // entryThresh: 구간 진입 기준(%), exitThresh: 구간 이탈 기준(%), minDuration: 최소 지속 주수
+    function detectTrendSegments(weeks, entryThresh, exitThresh, minDuration) {
+      entryThresh = entryThresh || 10;
+      exitThresh = exitThresh || 3;
+      minDuration = minDuration || 2;
+
+      var upSegs = [], dnSegs = [];
+
+      // 상승 구간 탐색
+      var inSeg = false, cur = [];
+      weeks.forEach(function(w) {
+        if (!inSeg && w.changePct >= entryThresh) {
+          inSeg = true; cur = [w];
+        } else if (inSeg && w.changePct >= exitThresh) {
+          cur.push(w);
+        } else if (inSeg) {
+          if (cur.length >= minDuration) upSegs.push(cur.slice());
+          inSeg = false; cur = [];
+        }
+      });
+      if (inSeg && cur.length >= minDuration) upSegs.push(cur.slice());
+
+      // 하락 구간 탐색
+      inSeg = false; cur = [];
+      weeks.forEach(function(w) {
+        if (!inSeg && w.changePct <= -entryThresh) {
+          inSeg = true; cur = [w];
+        } else if (inSeg && w.changePct <= -exitThresh) {
+          cur.push(w);
+        } else if (inSeg) {
+          if (cur.length >= minDuration) dnSegs.push(cur.slice());
+          inSeg = false; cur = [];
+        }
+      });
+      if (inSeg && cur.length >= minDuration) dnSegs.push(cur.slice());
+
+      return { upSegs: upSegs, dnSegs: dnSegs };
+    }
+
+    // 특정 품목의 예측 트렌드 분석 결과 반환
+    function analyzeForecastTrend(productId) {
+      if (!state.tftData || !state.tftData[productId]) return null;
+      var foreArr = state.tftData[productId].forecast;
+      if (!foreArr || foreArr.length < 14) return null;
+
+      // 기준값: TODAY 기준 AI 예측가 시작값 (점선 시작점)
+      var sortedFore = foreArr.slice().sort(function(a, b) { return a.date.localeCompare(b.date); });
+      var baseEntry = sortedFore.find(function(f) { return f.date >= TODAY; });
+      var baseline = baseEntry ? baseEntry.price : (foreArr[0] ? foreArr[0].price : 1);
+
+      // TODAY 이후 예측 데이터만 사용
+      var futureArr = foreArr.filter(function(f) { return f.date > TODAY; });
+      if (futureArr.length < 7) return null;
+
+      var weeks = weeklyBins(futureArr, baseline);
+      if (weeks.length < 2) return null;
+
+      var segs = detectTrendSegments(weeks);
+      var nearestUp = segs.upSegs.sort(function(a, b) { return a[0].week - b[0].week; })[0] || null;
+      var nearestDn = segs.dnSegs.sort(function(a, b) { return a[0].week - b[0].week; })[0] || null;
+
+      return { weeks: weeks, nearestUp: nearestUp, nearestDn: nearestDn, baseline: baseline };
+    }
+
+    // "2026-02-25" → "02/25"
+    function fmtMD(dateStr) {
+      return dateStr ? dateStr.slice(5).replace('-', '/') : '';
+    }
+
+    // 아코디언 카드 토글
+    function toggleFcCard(cardId) {
+      var card = document.getElementById(cardId);
+      if (card) card.classList.toggle('expanded');
+    }
+
+    // "YYYY-MM-DD" → 1년 전/후 이동 → "YYYY-MM-DD"
+    function shiftDateYear(dateStr, delta) {
+      var dt = new Date(dateStr);
+      dt.setFullYear(dt.getFullYear() + delta);
+      return dt.toISOString().split('T')[0];
+    }
+
+    // "YYYY-MM-DD" → "YYYY.MM"
+    function fmtYM(dateStr) {
+      return dateStr ? dateStr.slice(0, 7).replace('-', '.') : '';
+    }
+
+    // 작년 동기 실제 데이터로 자연어 근거 문구 생성
+    function buildBasisNarrative(productId, seg, dir) {
+      var isUp = dir === 'up';
+      var p = PRODUCTS[productId];
+      var productName = p ? p.name.split('(')[0] : '해당 품목';
+
+      var lyStart    = shiftDateYear(seg[0].startDate, -1);
+      var lySegEnd   = shiftDateYear(seg[seg.length - 1].endDate, -1);
+      // 패턴 회복/하락 추적을 위해 3주 더 보기
+      var lyEnd = shiftDateYear(
+        new Date(new Date(seg[seg.length - 1].endDate).getTime() + 21 * 86400000)
+          .toISOString().split('T')[0],
+        -1
+      );
+
+      var basisStartYM = fmtYM(lyStart);
+      var basisEndYM   = fmtYM(lySegEnd);
+
+      var sorted = (state.data[productId] || []).slice()
+        .sort(function(a, b) { return a.date.localeCompare(b.date); });
+
+      var rangeData = sorted.filter(function(d) {
+        return d.date >= lyStart && d.date <= lyEnd && d.price && d.price > 0;
+      });
+
+      // 데이터 부족 시 단순 fallback
+      if (rangeData.length < 7) {
+        return '📊 작년 동기(' + basisStartYM + ' ~ ' + basisEndYM + ') 실제 단가 흐름을 기반으로 예측한 구간입니다.';
+      }
+
+      var prices = rangeData.map(function(d) { return d.price; });
+      var startPrice = prices[0];
+
+      // 극값(최고/최저) 찾기
+      var extremePrice = isUp ? Math.max.apply(null, prices) : Math.min.apply(null, prices);
+      var peakIdx = prices.indexOf(extremePrice);
+      var weeksToExtreme = Math.max(1, Math.ceil((peakIdx + 1) / 7));
+
+      // 극값 도달 후 그 수준 유지 기간 계산 (10% 이내 유지)
+      var threshold = isUp ? extremePrice * 0.90 : extremePrice * 1.10;
+      var sustainedDays = 0;
+      for (var i = peakIdx; i < prices.length; i++) {
+        if (isUp ? prices[i] >= threshold : prices[i] <= threshold) { sustainedDays++; }
+        else { break; }
+      }
+      var sustainedWeeks = Math.round(sustainedDays / 7);
+
+      // 원 단위 표시 (100원 단위 반올림)
+      var rnd = function(n) { return Math.round(n / 100) * 100; };
+      var won = function(n) { return rnd(n).toLocaleString() + '원'; };
+
+      var text = '작년 시점(' + basisStartYM + ' ~ ' + basisEndYM + ') '
+        + productName + ' 단가는 약 ' + won(startPrice) + '에서 시작해 ';
+
+      if (isUp) {
+        text += weeksToExtreme + '주간 꾸준히 올라 최고 ' + won(extremePrice) + '까지 상승했습니다. ';
+        text += sustainedWeeks >= 2
+          ? '이후 약 ' + sustainedWeeks + '주간 높은 가격을 유지하다 서서히 하락하는 흐름을 보였습니다. '
+          : '이후 서서히 하락하는 흐름을 보였습니다. ';
+      } else {
+        text += weeksToExtreme + '주간 지속적으로 내려 최저 ' + won(extremePrice) + '까지 하락했습니다. ';
+        text += sustainedWeeks >= 2
+          ? '이후 약 ' + sustainedWeeks + '주간 낮은 가격이 이어지다 서서히 회복하는 흐름을 보였습니다. '
+          : '이후 서서히 회복하는 흐름을 보였습니다. ';
+      }
+      text += '올해도 비슷한 계절적 흐름이 나타날 가능성이 있어 해당 패턴을 기반으로 예측했습니다.';
+
+      return '📊 ' + text;
+    }
+
+    // 분석 결과를 아코디언 DOM으로 렌더링
+    function buildForecastComment(productId) {
+      var box = document.getElementById('forecast-comment-box');
+      if (!box) return;
+
+      var result = analyzeForecastTrend(productId);
+      if (!result || (!result.nearestUp && !result.nearestDn)) {
+        box.innerHTML = '';
+        return;
+      }
+
+      var p = PRODUCTS[productId];
+      var unit = p ? p.unit : '원/kg';
+
+      function makeCard(seg, dir, cardId) {
+        var startWeek = seg[0].week;
+        var duration = seg.length;
+        var isUp = dir === 'up';
+        var cls = isUp ? 'fc-up' : 'fc-dn';
+        var label = isUp ? '↑ 상승 구간 예측' : '↓ 하락 구간 예측';
+        var headline = startWeek === 1
+          ? ('이번 주부터 단가 ' + (isUp ? '상승' : '하락') + ' 구간 예상')
+          : (startWeek + '주 후 단가 ' + (isUp ? '상승' : '하락') + ' 구간 시작 예정');
+
+        var segWeekNums = {};
+        seg.forEach(function(w) { segWeekNums[w.week] = true; });
+
+        var ratesHtml = result.weeks.map(function(w) {
+          var sign = w.changePct >= 0 ? '+' : '';
+          var inSeg = !!segWeekNums[w.week];
+          var pctCls = w.changePct > 1 ? 'fc-pct-up' : w.changePct < -1 ? 'fc-pct-dn' : 'fc-pct-flat';
+          var rowWeight = inSeg ? '600' : '400';
+          var dateRange = (w.startDate && w.endDate)
+            ? '<span style="color:var(--muted);font-weight:400"> (' + fmtMD(w.startDate) + '~' + fmtMD(w.endDate) + ')</span>'
+            : '';
+          // 예측 가격: 오늘 기준가 대비 주간 평균가 표시
+          var priceTag = w.avg
+            ? '<span style="color:var(--muted);font-weight:400;font-size:0.9em"> / 약 ' + w.avg.toLocaleString() + unit + '</span>'
+            : '';
+
+          return '<div style="font-weight:' + rowWeight + ';display:flex;justify-content:space-between;align-items:baseline;gap:10px">'
+            + '<span>' + w.week + '주' + dateRange + '</span>'
+            + '<span style="white-space:nowrap"><span class="' + pctCls + '">' + sign + w.changePct + '%</span>' + priceTag + '</span>'
+            + '</div>';
+        }).join('');
+
+        var basisText = buildBasisNarrative(productId, seg, dir);
+        var basisHtml = '<div class="fc-basis">' + basisText + '</div>';
+
+        return '<div class="fc-card ' + cls + '" id="' + cardId + '">'
+          + '<div class="fc-header" onclick="toggleFcCard(\'' + cardId + '\')">'
+          + '<div class="fc-header-left">'
+          + '<div class="fc-label">' + label + '</div>'
+          + '<div class="fc-headline">' + headline + '</div>'
+          + '</div>'
+          + '<div class="fc-chevron">&#8250;</div>'
+          + '</div>'
+          + '<div class="fc-body">'
+          + '<div style="font-size:10px; color:var(--muted); margin-bottom:6px; opacity:0.8">※ 변동률은 업데이트 기준일 AI 예측가 기준입니다.</div>'
+          + '<div class="fc-rates">' + ratesHtml + '</div>'
+          + '<div class="fc-duration">약 ' + duration + '주간 지속 예상</div>'
+          + basisHtml
+          + '</div>'
+          + '</div>';
+      }
+
+      var cards = [];
+      if (result.nearestUp) cards.push(makeCard(result.nearestUp, 'up', 'fc-up-card'));
+      if (result.nearestDn) cards.push(makeCard(result.nearestDn, 'dn', 'fc-dn-card'));
+      box.innerHTML = cards.join('');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // CHART TREND ARROWS  (실측 데이터 기반)
+    // ═══════════════════════════════════════════════════════════
+
+    // 실제(실선) 데이터에서 3주+ 연속 5%+ 방향 변동 추세 구간 탐지
+    // histData: state.data[productId] 전체 배열
+    // allDates: 차트 레이블 배열 (인덱스 기준)
+    // basePrice: normalized 모드 기준가
+    function detectChartTrends(histData, allDates, basePrice) {
+      if (!histData || histData.length < 21) return [];
+
+      var inView = histData.filter(function(d) {
+        return d.date <= TODAY && allDates.indexOf(d.date) !== -1 && d.price > 0;
+      }).slice().sort(function(a, b) { return a.date < b.date ? -1 : 1; });
+
+      if (inView.length < 21) return [];
+
+      // 7일 단위 주간 평균 (최소 4일 이상)
+      var weeks = [];
+      for (var i = 0; i + 3 < inView.length; i += 7) {
+        var slice = inView.slice(i, i + 7);
+        if (slice.length < 4) break;
+        var avg = slice.reduce(function(s, d) { return s + d.price; }, 0) / slice.length;
+        var startDate = slice[0].date;
+        var endDate = slice[slice.length - 1].date;
+        var si = allDates.indexOf(startDate);
+        var ei = allDates.indexOf(endDate);
+        if (si === -1 || ei === -1) continue;
+        weeks.push({ avg: avg, startDate: startDate, endDate: endDate, si: si, ei: ei });
+      }
+
+      if (weeks.length < 4) return [];
+
+      // 전주 대비 변화율
+      weeks[0].wow = 0;
+      for (var j = 1; j < weeks.length; j++) {
+        weeks[j].wow = (weeks[j].avg - weeks[j - 1].avg) / weeks[j - 1].avg * 100;
+      }
+
+      var THRESH = 5;
+      var MIN_WEEKS = 3;
+      var segments = [];
+      var inSeg = false, segDir = 0, segStart = 0;
+
+      function closeSeg(endK) {
+        var len = endK - segStart;
+        if (len >= MIN_WEEKS) {
+          var ws = weeks[segStart];
+          var we = weeks[endK - 1];
+          var yS = state.compMode === 'normalized' ? ws.avg / basePrice * 100 : ws.avg;
+          var yE = state.compMode === 'normalized' ? we.avg / basePrice * 100 : we.avg;
+          segments.push({ dir: segDir, xMin: ws.si, xMax: we.ei, yMin: yS, yMax: yE });
+        }
+      }
+
+      for (var k = 1; k < weeks.length; k++) {
+        var wow = weeks[k].wow;
+        var dir = wow >= THRESH ? 1 : (wow <= -THRESH ? -1 : 0);
+        if (!inSeg && dir !== 0) {
+          inSeg = true; segDir = dir; segStart = k - 1;
+        } else if (inSeg && dir === segDir) {
+          // 구간 계속
+        } else if (inSeg) {
+          closeSeg(k);
+          inSeg = false;
+          if (dir !== 0) { inSeg = true; segDir = dir; segStart = k - 1; }
+        }
+      }
+      if (inSeg) closeSeg(weeks.length);
+
+      return segments;
+    }
+
+    // todayLine + 추세 화살표 어노테이션 객체 생성
+    function buildChartAnnotations(todayIdx, trendSegs) {
+      var ann = {
+        todayLine: {
+          type: 'line',
+          xMin: todayIdx,
+          xMax: todayIdx,
+          display: false, // 마스크 애니메이션 후 표시
+          borderColor: '#003d38',
+          borderWidth: 2,
+          label: {
+            display: true,
+            content: 'TODAY',
+            position: 'start',
+            backgroundColor: '#003d38',
+            color: '#c8ff64',
+            font: { size: 9, weight: '900' },
+            padding: { x: 6, y: 3 }
+          }
+        }
+      };
+      (trendSegs || []).forEach(function(seg, i) {
+        var isUp = seg.dir > 0;
+        ann['trend_' + i] = {
+          type: 'line',
+          xMin: seg.xMin,
+          xMax: seg.xMax,
+          yMin: seg.yMin,
+          yMax: seg.yMax,
+          borderColor: isUp ? 'rgba(86,211,108,0.55)' : 'rgba(255,99,99,0.55)',
+          borderWidth: 3,
+          label: {
+            display: true,
+            content: isUp ? '↗' : '↘',
+            position: 'end',
+            backgroundColor: isUp ? 'rgba(86,211,108,0.15)' : 'rgba(255,99,99,0.15)',
+            color: isUp ? '#56d36c' : '#ff6363',
+            font: { size: 14, weight: '700' },
+            padding: { x: 5, y: 2 }
+          }
+        };
+      });
+      return ann;
     }
 
     function fmt(n) { return n ? Math.round(n).toLocaleString() : '-'; }
@@ -33047,7 +33589,7 @@
               </div>
               <div id="active-prod-header" style="font-size:13px; font-weight:700; color:${activeProduct.color}">${activeProduct.emoji} ${activeProduct.name}</div>
             </div>
-             <div class="chart-canvas-wrap"><canvas id="comp-chart" height="400"></canvas></div>
+             <div class="chart-canvas-wrap"><canvas id="comp-chart" height="400"></canvas><div id="forecast-comment-box"></div></div>
             <div class="legend" id="comp-legend"></div>
           </div>
         </div>
@@ -33076,7 +33618,7 @@
 
         <div class="chart-box">
           <div class="chart-header">
-            <div class="chart-title">최근 농업 관련 소식</div>
+            <div class="chart-title">최근 농업 관련 소식 <span style="font-size:11px; font-weight:400; color:var(--muted); margin-left:4px">(크롤링 기능 추가 예정)</span></div>
             <div style="font-size:10px; color:var(--dim); cursor:help" title="크롤링된 최신 뉴스를 보여줍니다.">LIVE 🛰️</div>
           </div>
           <div class="news-list" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin-top:8px">
@@ -33121,7 +33663,7 @@
         </div>
         <div class="insight-card" style="margin-bottom: 32px; border-left: 4px solid var(--blue); padding: 24px;">
           <div class="insight-text" style="font-size: 14px; line-height: 1.8; color: var(--dim); margin-bottom: 0;">
-            도매단가 수요예측은 <b>계절성, 외부 변수, 비선형 패턴, 다중 시계열</b>이라는 복합적인 특성을 가집니다. 단일 모델로 모든 특성을 완벽히 포착하는 것은 한계가 있기에, <b>"충분히 높은 개별 성능"</b>과 <b>"서로 다른 오차 패턴(다양성)"</b>을 가진 모델들을 결합하여 상호 보완하는 전략이 앙상블입니다. GREF는 트리 부스팅(LGBM, CatBoost)과 딥러닝(TFT)의 조합을 통해 어떤 시장 상황에서도 흔들리지 않는 안정적인 예측 성능을 보장합니다.
+            단일 모델은 특정 패턴에 편향될 수 있어, 서로 다른 방식으로 학습한 여러 모델의 예측값을 결합하는 앙상블 전략을 사용합니다.
           </div>
         </div>
 
@@ -33132,15 +33674,15 @@
         <div class="insight-section" style="margin-bottom: 32px">
           <div class="insight-card" style="border-top: 4px solid var(--green)">
             <div class="insight-title" style="color:var(--green)">LightGBM (외부변수 정밀학습)</div>
-            <div class="insight-text" style="font-size:13px">환율, 유가, 날씨 등 수많은 외부 변수 간의 복합적인 비선형 관계를 분할 트리를 통해 자동 학습합니다. 특히 <b>Lag/Rolling 피처</b>를 통해 단기 가격 변동의 민감도를 극대화합니다.</div>
+            <div class="insight-text" style="font-size:13px">환율, 유가, 날씨 등 수많은 외부 변수 간의 복합적인 비선형 관계를 분할 트리를 통해 자동 학습합니다. 특히 <b>Lag/Rolling 피처</b>를 통해 단기 가격 변동 패턴 학습에 활용합니다.</div>
           </div>
           <div class="insight-card" style="border-top: 4px solid var(--blue)">
             <div class="insight-title" style="color:var(--blue)">CatBoost (범주형 데이터 특화)</div>
-            <div class="insight-text" style="font-size:13px">도매시장, 산지, 품종 등 방대한 범주형 데이터를 <b>Ordered Target Encoding</b>으로 누수 없이 정교하게 처리합니다. 이는 LightGBM과는 또 다른 관점의 예측값을 생성하여 앙상블의 다양성을 완성합니다.</div>
+            <div class="insight-text" style="font-size:13px">도매시장, 산지, 품종 등 방대한 범주형 데이터를 <b>Ordered Target Encoding</b>으로 범주형 변수를 수치로 변환하여 처리합니다. 이는 LightGBM과는 또 다른 관점의 예측값을 생성하여 앙상블의 다양성을 완성합니다.</div>
           </div>
           <div class="insight-card" style="border-top: 4px solid var(--red)">
             <div class="insight-title" style="color:var(--red)">TFT (장기 문맥/해석력)</div>
-            <div class="insight-text" style="font-size:13px">시계열 순서를 구조적으로 학습하여 먼 과거의 패턴까지 포착합니다. <b>LSTM + Attention</b> 구조는 다수 품목을 동시에 학습하면서도 결과에 대한 해석 가능성(Interpretability)과 신뢰 구간을 동시에 제공합니다.</div>
+            <div class="insight-text" style="font-size:13px">시계열 데이터에서 장기 패턴을 학습합니다. <b>LSTM + Attention</b> 구조는 다수 품목을 동시에 학습하면서도 결과에 대한 해석 가능성(Interpretability)과 신뢰 구간을 동시에 제공합니다.</div>
           </div>
         </div>
 
@@ -33167,7 +33709,7 @@
                 </div>
                 <div style="background:var(--surface); padding:16px; border-radius:10px; border:1px solid var(--border)">
                    <div style="font-size:12px; font-weight:700; color:var(--dark); margin-bottom:6px">EFB</div>
-                   <div style="font-size:11px; color:var(--dim); line-height:1.5">배타적 피처 번들링으로 고차원 희소 데이터 처리 효율 극대화</div>
+                   <div style="font-size:11px; color:var(--dim); line-height:1.5">배타적 피처 번들링으로 고차원 희소 데이터 처리 효율 향상</div>
                 </div>
                 <div style="background:var(--surface); padding:16px; border-radius:10px; border:1px solid var(--border)">
                    <div style="font-size:12px; font-weight:700; color:var(--dark); margin-bottom:6px">Leaf-wise</div>
@@ -33194,7 +33736,7 @@
                 <table class="data-table" style="font-size:11px">
                    <thead><tr><th>항목</th><th>내용</th></tr></thead>
                    <tbody>
-                      <tr><td>속도/메모리</td><td>압도적 고속 연산 및 효율성</td></tr>
+                       <tr><td>속도/메모리</td><td>고속 연산 및 효율성</td></tr>
                       <tr><td>과적합</td><td>소규모 데이터에서 오버피팅 주의</td></tr>
                       <tr><td>인식 불가</td><td>시계열 순서 자체 인식 불가 (피처 필요)</td></tr>
                    </tbody>
@@ -33208,7 +33750,7 @@
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px">
             <div>
                <h3 style="color:var(--blue); font-size:18px; margin-bottom:8px">CatBoost (Categorical Boosting)</h3>
-               <p style="font-size:13px; color:var(--dim)">Yandex 개발. 범주형 변수 처리에 최적화된 대칭 트리 계열 부스팅 모델</p>
+               <p style="font-size:13px; color:var(--dim)">Yandex 개발. 범주형 변수 처리 등에 유리한 대칭 트리 계열 부스팅 모델</p>
             </div>
           </div>
 
@@ -33217,7 +33759,7 @@
             <div style="display:flex; flex-direction:column; gap:12px">
                <div style="background:var(--surface); padding:16px; border-radius:10px; border:1px solid var(--border)">
                   <div style="font-size:12px; font-weight:700; color:var(--dark); margin-bottom:6px">Ordered Target Encoding</div>
-                  <div style="font-size:11px; color:var(--dim); line-height:1.5">현재 샘플 이전 데이터만 사용하여 타겟 인코딩을 수행함에 따라 <b>데이터 누수(Leakage)</b>를 구조적으로 방지합니다.</div>
+                  <div style="font-size:11px; color:var(--dim); line-height:1.5">현재 샘플 이전 데이터만 사용하여 타겟 인코딩을 수행함에 따라 데이터 누수를 방지합니다.</div>
                </div>
                <div style="background:var(--surface); padding:16px; border-radius:10px; border:1px solid var(--border)">
                   <div style="font-size:12px; font-weight:700; color:var(--dark); margin-bottom:6px">Symmetric Tree & Ordered Boosting</div>
@@ -33244,7 +33786,7 @@
                    <thead><tr><th>항목</th><th>내용</th></tr></thead>
                    <tbody>
                       <tr><td>범주형 변수</td><td>원핫인코딩 없이 고성능 처리 가능</td></tr>
-                      <tr><td>안정적 성능</td><td>튜닝 없이도 우수한 기본 성능 보장</td></tr>
+                       <tr><td>안정적 성능</td><td>튜닝 없이도 일정한 수준의 기본 성능을 보여줌</td></tr>
                       <tr><td>학습 속도</td><td>LGBM 대비 상대적으로 느린 학습 시간</td></tr>
                    </tbody>
                 </table>
@@ -33257,7 +33799,7 @@
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px">
             <div>
                <h3 style="color:var(--red); font-size:18px; margin-bottom:8px">TFT (Temporal Fusion Transformer)</h3>
-               <p style="font-size:13px; color:var(--dim)">Google Research. 어텐션 매커니즘을 시계열 예측에 최적화한 최첨단 딥러닝 아키텍처</p>
+               <p style="font-size:13px; color:var(--dim)">Google Research. 어텐션 매커니즘을 시계열 예측에 활용하는 딥러닝 아키텍처</p>
             </div>
           </div>
 
@@ -33328,7 +33870,7 @@
             </thead>
             <tbody>
               <tr><td>알고리즘</td><td>트리 앙상블 (부스팅)</td><td>트리 앙상블 (부스팅)</td><td>딥러닝 (Trfr)</td></tr>
-              <tr><td>범주형 처리</td><td>지원 (보통)</td><td><b>자체 지원 (최강)</b></td><td>임베딩 처리</td></tr>
+               <tr><td>범주형 처리</td><td>지원 (보통)</td><td><b>자체 지원 가능</b></td><td>임베딩 처리</td></tr>
               <tr><td>시계열 순서</td><td>인식 불가 (피처생성 필수)</td><td>인식 불가 (피처생성 필수)</td><td><b>자체 인식</b></td></tr>
               <tr><td>불확실성</td><td>미지원</td><td>미지원</td><td><b>분위수 예측 지원</b></td></tr>
               <tr><td>학습 속도</td><td>매우 빠름</td><td>보통</td><td>느림 (GPU 권장)</td></tr>
@@ -33465,9 +34007,9 @@
         <div class="chart-section">
           <div class="chart-box">
             <div class="chart-header">
-              <div class="chart-title" style="color: var(--text)">
-                ${p.emoji} ${p.name} — 단가 추이 
-                <span style="color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 4px">(${p.unit})</span>
+              <div class="chart-title" style="color: var(--text); display:flex; align-items:baseline; flex-wrap:wrap; gap:4px">
+                <span>${p.emoji} ${p.name} — 단가 추이 <span style="color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 4px">(${p.unit})</span></span>
+                ${(u => u ? `<a class="nongnet-link" href="${u}" target="_blank" rel="noopener">🔗 농넷 바로가기</a>` : '')({'tomato':'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=080303','cucumber':'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=0901','paprika':'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=132606','strawberry':'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=080413'}[id])}
               </div>
             </div>
             <div class="chart-canvas-wrap"><canvas id="detail-chart" height="300"></canvas></div>
@@ -34017,7 +34559,23 @@
         </div>
 
         <div class="patch-container" style="display: flex; flex-direction: column; gap: 32px; text-align: left;">
-          
+
+          <div class="insight-card" style="border-left: 5px solid var(--green); padding: 24px;">
+            <div class="insight-title" style="font-size: 18px; margin-bottom: 16px;"><span style="color:var(--green)">v3.3.0</span> — 예측 코멘트 박스 신규 도입 및 차트 시각화 고도화 (2026-02-27)</div>
+            <div class="insight-text" style="font-size: 14px; line-height: 1.8;">
+              <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <li><b>예측 코멘트 박스 신규 추가:</b> 메인 차트 우상단에 아코디언 방식의 예측 가격 분석 코멘트 박스를 도입하였습니다. 향후 8주 예측 데이터를 주차별로 집계하여 10% 이상 지속되는 상승/하락 구간을 자동 탐지하며, 작년 동기 실제 단가 흐름을 기반으로 한 자연어 근거 문구를 함께 표시합니다.</li>
+                <li><b>예측 변동률 기준 변경:</b> 주차별 변동률 계산 기준을 기존 실측 마지막 가격에서 업데이트 기준일 AI 예측가(점선 시작값)로 변경하였습니다. 예측 모델 내 일관성을 확보하고 실측 데이터 지연에 의한 기준 오차를 방지합니다.</li>
+                <li><b>메인 차트 등장 애니메이션:</b> 차트 로딩 및 품목 전환 시 좌→우 마스크 슬라이드 애니메이션(1.2s)과 캔버스 fadeInUp 효과를 적용하였습니다. TODAY 구분선은 애니메이션 완료 후 자연스럽게 표시됩니다.</li>
+                <li><b>추세 화살표 시각화:</b> 실측 데이터에서 3주 이상 연속으로 주간 5% 이상 방향성 변동이 지속되는 구간을 자동 탐지하여 ↗/↘ 화살표 오버레이를 차트에 표시합니다. 상승 구간은 녹색, 하락 구간은 적색으로 표현됩니다.</li>
+                <li><b>휠/드래그 인터랙션 제거:</b> 메인 차트의 마우스 휠 줌 및 드래그 패닝 기능을 비활성화하여 의도치 않은 차트 조작을 방지하고 스크롤 편의성을 개선하였습니다.</li>
+                <li><b>업데이트 기준일 표시:</b> 상단 바 기간 입력란 옆에 데이터 기준일을 자동으로 표시합니다. prices.json의 last_updated 값을 읽어 실시간 반영됩니다.</li>
+                <li><b>농넷 바로가기 링크 추가:</b> 품목별 상세 페이지 차트 소제목 옆에 농넷(nongnet.or.kr) 공식 도매 시세 페이지 링크를 추가하였습니다.</li>
+              </ul>
+            </div>
+            <div class="insight-tag" style="background:var(--green-dim); color:var(--green); font-size: 11px; padding: 4px 10px; margin-top: 16px;">Performance & UI</div>
+          </div>
+
           <div class="insight-card" style="border-left: 5px solid var(--green); padding: 24px;">
             <div class="insight-title" style="font-size: 18px; margin-bottom: 16px;"><span style="color:var(--green)">v3.2.0</span> — 사용자 인터랙션 강화 및 한국형 차트 표준 적용 (2026-02-26)</div>
             <div class="insight-text" style="font-size: 14px; line-height: 1.8;">
@@ -34110,33 +34668,8 @@
       const canvas = document.getElementById('comp-chart');
       if (!canvas) return;
 
-      canvas.style.cursor = 'grab';
-
-      // 1. Mouse Wheel Zoom (Period Adjustment)
-      canvas.addEventListener('wheel', (e) => {
-        if (state.view !== 'overview') return;
-        e.preventDefault(); // Prevent page scroll
-
-        // Wheel up (e.deltaY < 0) -> Decrease period (zoom in)
-        // Wheel down (e.deltaY > 0) -> Increase period (zoom out)
-        const delta = e.deltaY > 0 ? 5 : -5;
-        state.period = Math.max(7, Math.min(180, state.period + delta));
-
-        const input = document.getElementById('period-input');
-        if (input) input.value = state.period;
-
-        render();
-      }, { passive: false });
-
-      // 2. Drag Pan (Offset Adjustment)
-      canvas.addEventListener('mousedown', (e) => {
-        if (state.view !== 'overview') return;
-        e.preventDefault(); // FIX: Prevent default drag behavior
-        isDragging = true;
-        dragStartX = e.clientX;
-        dragStartOffset = state.viewOffset;
-        canvas.style.cursor = 'grabbing';
-      });
+      // 휠 줌 / 드래그 패닝 제거 — 인터랙션 비활성화
+      canvas.style.cursor = 'default';
     }
 
     window.addEventListener('mousemove', (e) => {
@@ -34182,6 +34715,15 @@
     // ═══════════════════════════════════════════════════════════
     state.data = loadData();
     render();
+
+    // 업데이트 날짜 표시
+    (function() {
+      var _updStr = (typeof INJECTED_MODEL_PERF !== 'undefined' && INJECTED_MODEL_PERF && INJECTED_MODEL_PERF.last_updated)
+        ? INJECTED_MODEL_PERF.last_updated.slice(0, 10).replace(/-/g, '.')
+        : TODAY.replace(/-/g, '.');
+      var el = document.getElementById('topbar-update-date');
+      if (el) el.textContent = '기준일: ' + _updStr;
+    })();
   </script>
 </body>
 
