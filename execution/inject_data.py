@@ -242,12 +242,12 @@ def generate():
     inject_lines = [
         f"{pad}// @@INJECT_START@@",
         f"{pad}// 자동 생성 — inject_data.py ({datetime.now().strftime('%Y-%m-%d %H:%M')})",
-        f"{pad}const INJECTED_TODAY        = {json.dumps(today_str)};",
-        f"{pad}const INJECTED_HISTORICAL   = {pad}{indent_json(historical, base_indent=len(pad))};",
-        f"{pad}const INJECTED_FORECAST     = {pad}{indent_json(forecast_data, base_indent=len(pad))};",
-        f"{pad}const INJECTED_MODEL_PERF   = {pad}{indent_json(model_perf, base_indent=len(pad))};",
+        f"{pad}let INJECTED_TODAY        = {json.dumps(today_str)};",
+        f"{pad}let INJECTED_HISTORICAL   = {indent_json(historical, base_indent=len(pad))};",
+        f"{pad}let INJECTED_FORECAST     = {indent_json(forecast_data, base_indent=len(pad))};",
+        f"{pad}let INJECTED_MODEL_PERF   = {indent_json(model_perf, base_indent=len(pad))};",
         f"{pad}// test_results: 날짜별 실제vs예측 (AI backtesting, null이면 미사용)",
-        f"{pad}const INJECTED_TEST_RESULTS = {pad}{indent_json(test_results if test_results else None, base_indent=len(pad))};",
+        f"{pad}let INJECTED_TEST_RESULTS = {indent_json(test_results if test_results else None, base_indent=len(pad))};",
         f"{pad}// @@INJECT_END@@",
     ]
     inject_block = '\n'.join(inject_lines)
