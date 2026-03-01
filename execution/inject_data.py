@@ -241,7 +241,8 @@ def generate():
     pad = '    '  # JS 4-space indent
     inject_lines = [
         f"{pad}// @@INJECT_START@@",
-        f"{pad}// 자동 생성 — inject_data.py ({datetime.now().strftime('%Y-%m-%d %H:%M')})",
+        f"{pad}// 자동 생성 — inject_data.py",
+        f"{pad}let INJECTED_LAST_UPDATED = {json.dumps(datetime.now().strftime('%Y-%m-%d %H:%M'))};",
         f"{pad}let INJECTED_TODAY        = {json.dumps(today_str)};",
         f"{pad}let INJECTED_HISTORICAL   = {indent_json(historical, base_indent=len(pad))};",
         f"{pad}let INJECTED_FORECAST     = {indent_json(forecast_data, base_indent=len(pad))};",

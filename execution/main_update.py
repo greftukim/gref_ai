@@ -216,16 +216,19 @@ def generate_prices_json():
         return False
 
     today_str = max(all_last_dates)
-
+    today_now = datetime.now().strftime('%Y-%m-%d %H:%M')
+    
     # 모델 성능 로드
     model_perf = None
     if os.path.exists(MODEL_PERF_JSON):
         with open(MODEL_PERF_JSON, encoding='utf-8') as f:
             model_perf = json.load(f)
+        if model_perf:
+            model_perf['last_updated'] = today_now
 
     # prices.json 저장
     output = {
-        "last_updated":    datetime.now().strftime('%Y-%m-%d %H:%M'),
+        "last_updated":    today_now,
         "today":           today_str,
         "historical":      historical,
         "forecast":        forecast_data,

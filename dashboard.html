@@ -32600,6 +32600,7 @@
         .then(r => r.json())
         .then(json => {
           if (json.today) TODAY = json.today;
+          if (json.last_updated) INJECTED_LAST_UPDATED = json.last_updated;
           INJECTED_HISTORICAL = json.historical || {};
           INJECTED_FORECAST = json.forecast || null;
           INJECTED_MODEL_PERF = json.model_performance || null;
@@ -34771,12 +34772,18 @@
 
     // 업데이트 날짜 표시 함수
     function updateTopbarDate() {
-      // INJECTED_MODEL_PERF 또는 state.modelPerf에서 최신 업데이트 시각 추출
-      const perf = state.modelPerf || (typeof INJECTED_MODEL_PERF !== 'undefined' ? INJECTED_MODEL_PERF : null);
-      let _updStr = TODAY.replace(/-/g, '.');
-      if (perf && perf.last_updated) {
-        _updStr = perf.last_updated.slice(0, 10).replace(/-/g, '.');
+      // 1. INJECTED_LAST_UPDATED (inject_data.py에서 주입)
+      // 2. state.modelPerf.last_updated (prices.json에서 로드)
+      // 3. TODAY (마지막 데이터 날짜)
+      let rawDate = (typeof INJECTED_LAST_UPDATED !== 'undefined' && INJECTED_LAST_UPDATED) ? INJECTED_LAST_UPDATED : null;
+
+      if (!rawDate) {
+        const perf = state.modelPerf || (typeof INJECTED_MODEL_PERF !== 'undefined' ? INJECTED_MODEL_PERF : null);
+        if (perf && perf.last_updated) rawDate = perf.last_updated;
       }
+
+      let _updStr = rawDate ? rawDate.slice(0, 10).replace(/-/g, '.') : TODAY.replace(/-/g, '.');
+
       const el = document.getElementById('topbar-update-date');
       if (el) el.textContent = '기준일: ' + _updStr;
     }
