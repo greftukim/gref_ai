@@ -233,6 +233,8 @@ def generate():
     if os.path.exists(MODEL_PERF_JSON):
         with open(MODEL_PERF_JSON, encoding='utf-8') as f:
             model_perf = json.load(f)
+        if model_perf:
+            model_perf['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M')
         print(f"[OK] model_performance.json loaded")
     else:
         print(f"[WARN] model_performance.json not found — injecting without model perf")
