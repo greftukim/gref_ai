@@ -1525,10 +1525,12 @@
     // ║  수동 편집 금지. inject_data.py 실행 후 새로고침.        ║
     // ╚═══════════════════════════════════════════════════════════╝
     // @@INJECT_START@@
+    var INJECTED_LAST_UPDATED = null;
+
 
     // 자동 생성 — inject_data.py (2026-02-26 08:09)
-    let INJECTED_TODAY = "2026-02-24";
-    let INJECTED_HISTORICAL = {
+    var INJECTED_TODAY = "2026-02-24";
+    var INJECTED_HISTORICAL = {
       "strawberry": [
         {
           "date": "2023-01-02",
@@ -24490,7 +24492,7 @@
         }
       ]
     };
-    let INJECTED_FORECAST = {
+    var INJECTED_FORECAST = {
       "strawberry": {
         "forecast": [
           {
@@ -31708,7 +31710,7 @@
         ]
       }
     };
-    let INJECTED_MODEL_PERF = {
+    var INJECTED_MODEL_PERF = {
       "last_updated": "2026-02-25 14:53",
       "models": {
         "TFT": {
@@ -31729,7 +31731,7 @@
       }
     };
     // test_results: 날짜별 실제vs예측 (AI backtesting, null이면 미사용)
-    let INJECTED_TEST_RESULTS = {
+    var INJECTED_TEST_RESULTS = {
       "strawberry": [
         {
           "date": "2026-01-21",
