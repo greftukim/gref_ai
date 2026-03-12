@@ -13658,6 +13658,19 @@
 
         <div class="patch-container" style="display: flex; flex-direction: column; gap: 32px; text-align: left;">
 
+          <div class="insight-card" style="border-left: 5px solid var(--red); padding: 24px;">
+            <div class="insight-title" style="font-size: 18px; margin-bottom: 16px;"><span style="color:var(--red)">v3.4.0</span> — 자동 업데이트 안정화 및 메인 차트 예측 영역 추가 (2026-03-12)</div>
+            <div class="insight-text" style="font-size: 14px; line-height: 1.8;">
+              <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <li><b>자동 업데이트 시스템 안정화:</b> 크롤러 실패 시에도 기준일이 과거에 멈추지 않도록 "만료 예측 감지 로직"을 추가했습니다. AI 예측이 만료된 경우 자동으로 추세 기반 Fallback 예측을 생성하여 항상 최신 날짜를 유지합니다.</li>
+                <li><b>메인 차트 예측 범위(Band) 추가:</b> 작물 상세 페이지에만 제공되던 AI 예측 상한/하한 범위를 메인 대시보드 오버뷰 그래프에도 동일하게 적용했습니다.</li>
+                <li><b>GitHub Actions 파이프라인 수선:</b> 환경에 따른 데이터 누락(final_clean_dataset.csv)으로 인한 실행 실패 오류를 수정하고, 대시보드 연동 데이터 전량을 자동 커밋 범위에 포함시켰습니다.</li>
+                <li><b>데이터 동기화 강화:</b> 로컬 저장소와 원격 저장소 간의 데이터 불일치 문제를 해결하고, prices.json 및 CSV 데이터 전량을 최신 상태로 동기화했습니다.</li>
+              </ul>
+            </div>
+            <div class="insight-tag" style="background:var(--red-dim); color:var(--red); font-size: 11px; padding: 4px 10px; margin-top: 16px;">Core Logic & UI</div>
+          </div>
+
           <div class="insight-card" style="border-left: 5px solid var(--green); padding: 24px;">
             <div class="insight-title" style="font-size: 18px; margin-bottom: 16px;"><span style="color:var(--green)">v3.3.0</span> — 예측 코멘트 박스 신규 도입 및 차트 시각화 고도화 (2026-02-27)</div>
             <div class="insight-text" style="font-size: 14px; line-height: 1.8;">
