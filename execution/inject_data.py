@@ -78,14 +78,13 @@ def generate():
     test_results  = {}   # backtesting: 날짜별 실제 vs AI 예측
     all_last_dates = []
 
-    # ── 히스토리컬 데이터 로드 (통합 파일 사용) ───────────────────────────
+    # ── 히스토리컬 데이터 로드 (통합 파일 사용, 없으면 CSV만) ─────────────
     all_rows = []
     if os.path.exists(GLOBAL_CLEAN_DATA):
         all_rows = read_csv(GLOBAL_CLEAN_DATA)
         print(f"[OK] {len(all_rows)} records loaded from global dataset.")
     else:
-        print(f"[ERROR] Global dataset not found: {GLOBAL_CLEAN_DATA}")
-        return
+        print(f"[INFO] Global dataset not found — using data/*.csv only")
 
     for name, cfg in CROPS.items():
         # 1. 통합 데이터셋에서 과거 데이터 추출 및 날짜별 평균 계산
@@ -171,12 +170,24 @@ def generate():
         daily_trend = max(-max_daily, min(max_daily, raw_trend * 0.4))
 
         # ── 180일 예측: lgbm_forecast_dated.json 우선, fallback은 추세 ──────
+        # 최근 7일 평균 반입량을 예측 반입량으로 사용
+        vols7 = [h.get('volume', 0) for h in hist_list[-7:]]
+        avg_vol = int(sum(vols7) / len(vols7)) if vols7 else 0
+
+        # AI 예측 사용 가능 여부 확인 (stale 감지: 예측 시작일이 기준일 이전이면 만료)
+        use_ai = False
         if lgbm_dated and name in lgbm_dated.get('forecasts', {}):
+            ai_fc = lgbm_dated['forecasts'][name]
+            if ai_fc:
+                first_fc_date = ai_fc[0].get('date', '')
+                if first_fc_date > last_date_str:
+                    use_ai = True
+                else:
+                    print(f"         → AI 예측 만료 (시작={first_fc_date}, 기준={last_date_str}) → fallback")
+
+        if use_ai:
             # 실제 AI 모델 예측 사용
-            fc_list = lgbm_dated['forecasts'][name]
-            # 반입량 데이터가 누락된 경우 보완 (최근 7일 평균 사용)
-            vols7 = [h.get('volume', 0) for h in hist_list[-7:]]
-            avg_vol = int(sum(vols7) / len(vols7)) if vols7 else 0
+            fc_list = ai_fc
             for f in fc_list:
                 if 'volume' not in f:
                     f['volume'] = avg_vol
@@ -185,10 +196,6 @@ def generate():
             # Fallback: 추세 기반 결정론적 예측
             fc_list = []
             curr_price = last_price
-            
-            # 최근 7일 평균 반입량을 예측 반입량으로 사용
-            vols7 = [h.get('volume', 0) for h in hist_list[-7:]]
-            avg_vol = int(sum(vols7) / len(vols7)) if vols7 else 0
             
             for i in range(1, FORECAST_DAYS + 1):
                 curr_dt   = last_dt + timedelta(days=i)
@@ -205,7 +212,7 @@ def generate():
                     "unit":      "원/kg",
                     "avg_price": int(pred * w),
                     "box_unit":  box_unit,
-                    "volume":    avg_vol, # 반입량 추가
+                    "volume":    avg_vol,
                 })
                 curr_price = pred
             print(f"         → Trend-based forecast (fallback): {len(fc_list)}일")
