@@ -11863,6 +11863,27 @@
             }
           });
 
+          const foreHi = allDates.map((date, i) => {
+            if (i < todayIdx) return null;
+            if (i === todayIdx) {
+              const val = data[data.length - 1]?.price || 0;
+              return state.compMode === 'normalized' ? (val / basePrice * 100) : val;
+            }
+            const f = fore.find(x => x.date === date);
+            if (!f) return null;
+            return state.compMode === 'normalized' ? (f.hi / basePrice * 100) : f.hi;
+          });
+          const foreLo = allDates.map((date, i) => {
+            if (i < todayIdx) return null;
+            if (i === todayIdx) {
+              const val = data[data.length - 1]?.price || 0;
+              return state.compMode === 'normalized' ? (val / basePrice * 100) : val;
+            }
+            const f = fore.find(x => x.date === date);
+            if (!f) return null;
+            return state.compMode === 'normalized' ? (f.lo / basePrice * 100) : f.lo;
+          });
+
           datasets.push({
             label: p.name + ' (AI 예측)',
             data: predictedVals,
@@ -11872,6 +11893,28 @@
             pointRadius: 0,
             tension: 0.35,
             spanGaps: true,
+            yAxisID: 'y',
+            order: 1
+          });
+
+          datasets.push({
+            label: '상한',
+            data: foreHi,
+            borderColor: 'transparent',
+            pointRadius: 0,
+            fill: '+1',
+            tension: 0.35,
+            yAxisID: 'y',
+            order: 1
+          });
+          datasets.push({
+            label: '하한',
+            data: foreLo,
+            borderColor: 'transparent',
+            backgroundColor: p.bgAlpha + '0.15)',
+            pointRadius: 0,
+            fill: false,
+            tension: 0.35,
             yAxisID: 'y',
             order: 1
           });
