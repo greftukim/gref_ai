@@ -1,19 +1,19 @@
 {
-  "last_updated": "2026-02-27 15:00",
+  "last_updated": "2026-03-19 14:51",
   "models": {
     "TFT": {
-      "mape": 15.5,
-      "rmse": 1627.2,
+      "mape": 14.36,
+      "rmse": 1352.8,
       "rank": 1
     },
     "LightGBM": {
-      "mape": 16.28,
-      "rmse": 1790.0,
+      "mape": 15.08,
+      "rmse": 1488.0,
       "rank": 2
     },
     "CatBoost": {
-      "mape": 16.75,
-      "rmse": 1871.3,
+      "mape": 15.51,
+      "rmse": 1555.7,
       "rank": 3
     }
   }
