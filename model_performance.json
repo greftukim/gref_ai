@@ -1,20 +1,17 @@
 {
-  "last_updated": "2026-03-19 14:51",
+  "last_updated": "2026-03-27 16:32",
   "models": {
-    "TFT": {
-      "mape": 14.36,
-      "rmse": 1352.8,
-      "rank": 1
+    "Ensemble(LightGBM+DLinear)": {
+      "mape": 14.66,
+      "rmse": 1697.5,
+      "rank": 1,
+      "note": "Multi-horizon Direct + DLinear 앙상블"
     },
-    "LightGBM": {
-      "mape": 15.08,
-      "rmse": 1488.0,
-      "rank": 2
-    },
-    "CatBoost": {
-      "mape": 15.51,
-      "rmse": 1555.7,
-      "rank": 3
+    "LightGBM-Direct": {
+      "mape": 16.13,
+      "rmse": 1867.2,
+      "rank": 2,
+      "note": "Multi-horizon Direct (LightGBM only)"
     }
   }
 }
