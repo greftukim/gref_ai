@@ -3,6 +3,8 @@ pandas
 selenium
 webdriver-manager
 lightgbm
+catboost
 scikit-learn
+torch
 openpyxl
 python-dotenv

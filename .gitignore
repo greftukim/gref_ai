@@ -25,3 +25,5 @@ data/*_backup.csv
 # OS
 .DS_Store
 Thumbs.db
+
+catboost_info/
