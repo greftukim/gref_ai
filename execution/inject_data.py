@@ -182,10 +182,10 @@ def generate():
                 last_fc_date = ai_fc[-1].get('date', '')
                 if last_fc_date > last_date_str:
                     use_ai = True
+                    # 이미 지난 날짜의 예측은 제거하고 미래 예측만 사용
                     ai_fc = [f for f in ai_fc if f.get('date', '') > last_date_str]
-                    use_ai = True
                 else:
-                    print(f"         → AI 예측 만료 (마지막={first_fc_date}, 기준={last_date_str}) → fallback")
+                    print(f"         → AI 예측 만료 (마지막={last_fc_date}, 기준={last_date_str}) → fallback")
 
         if use_ai:
             # 실제 AI 모델 예측 사용
