@@ -35370,14 +35370,14 @@
       // If we have external TFT data for the current product, use it
       const targetId = currentView || (arguments[2]); // Hack to get ID if passed
       if (state.tftData && state.tftData[targetId]) {
-        return state.tftData[targetId].forecast.slice(0, days).map(f => ({
-          date: f.date,
-          price: f.price,
-          volume: f.volume || 0,
-          hi: f.hi,
-          lo: f.lo,
-          isTFT: true
-        }));
+        var OFF_SEASON = { strawberry: [7, 8] };
+        var _offMonths = OFF_SEASON[targetId] || [];
+        return state.tftData[targetId].forecast.slice(0, days).filter(function(f) {
+          var _m = new Date(f.date).getMonth() + 1;
+          return _offMonths.indexOf(_m) === -1;
+        }).map(function(f) {
+          return { date: f.date, price: f.price, volume: f.volume || 0, hi: f.hi, lo: f.lo, isTFT: true };
+        });
       }
 
       if (data.length < 3) return [];
