@@ -101,13 +101,20 @@
     }
 
     .nav-item:hover {
-      background: var(--surface2);
+      background: rgba(0, 0, 0, 0.04);
       color: var(--text);
     }
 
     .nav-item.active {
-      background: var(--accent-dim);
-      color: var(--accent);
+      background: #FFFFFF;
+      color: var(--green);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border: 1px solid var(--border);
+    }
+
+    .nav-item:not(.active) {
+      background: #F1F5F9;
+      color: var(--dim);
     }
 
     .nav-item .ni-emoji {
@@ -1431,7 +1438,7 @@
         <span class="ni-name">딸기(설향)</span>
       </div>
       <div class="nav-item" data-view="paprika">
-        <span class="ni-emoji">🫑</span>
+        <span class="ni-emoji">🌶️</span>
         <span class="ni-name">파프리카(미니)</span>
       </div>
     </div>
@@ -1444,7 +1451,7 @@
       <div class="topbar-title" id="topbar-title">메인 페이지</div>
       <div class="custom-input-group">
         <span style="font-size:12px; color:var(--dim)">조회/예측 기간(7~180일):</span>
-        <input type="number" id="period-input" class="custom-input" min="7" max="180" value="30">
+        <input type="number" id="period-input" class="custom-input" min="7" max="180" value="180">
         <button class="apply-btn" onclick="applyPeriod()">적용</button>
         <span id="topbar-update-date"
           style="font-size:11px; color:var(--muted); margin-left:10px; white-space:nowrap; opacity:0.8"></span>
@@ -1466,7 +1473,7 @@
           <option value="tomato">🍅 토마토(완숙)</option>
           <option value="cucumber">🥒 오이(백다다기)</option>
           <option value="strawberry">🍓 딸기(설향)</option>
-          <option value="paprika">🫑 파프리카(미니)</option>
+          <option value="paprika">🌶️ 파프리카(미니)</option>
         </select>
       </div>
       <div class="form-group">
@@ -32645,7 +32652,7 @@
       tomato: { name: '토마토(완숙)', emoji: '🍅', unit: '원/kg', color: '#FF5C5C', bgAlpha: 'rgba(255,92,92,', ma: 'rgba(255,92,92,0.5)' },
       cucumber: { name: '오이(백다다기)', emoji: '🥒', unit: '원/kg', color: '#2EFF8B', bgAlpha: 'rgba(46,255,139,', ma: 'rgba(46,255,139,0.5)' },
       strawberry: { name: '딸기(설향)', emoji: '🍓', unit: '원/kg', color: '#FF69B4', bgAlpha: 'rgba(255,105,180,', ma: 'rgba(255,105,180,0.5)' },
-      paprika: { name: '파프리카(미니)', emoji: '🫑', unit: '원/kg', color: '#FF8C00', bgAlpha: 'rgba(255,140,0,', ma: 'rgba(255,140,0,0.5)' },
+      paprika: { name: '파프리카(미니)', emoji: '🌶️', unit: '원/kg', color: '#FF8C00', bgAlpha: 'rgba(255,140,0,', ma: 'rgba(255,140,0,0.5)' },
     };
 
     // Chart.js Global Defaults
@@ -32671,7 +32678,7 @@
     // ═══════════════════════════════════════════════════════════
     let state = {
       view: 'overview',
-      period: 30, // Default to 30 days past/future
+      period: 180, // Default to 180 days past/future
       viewOffset: 0, // Panning offset in days
       showMA: true,
       showForecast: true,
@@ -32686,15 +32693,21 @@
     let rotationTimer = null;
 
     function startRotation() {
-      // Automatic rotation disabled by user request
+      stopRotation();
+      rotationTimer = setInterval(function() {
+        var products = state.activeProducts;
+        if (products.length === 0) return;
+        state.rotatingIndex = (state.rotatingIndex + 1) % products.length;
+        render();
+      }, 60000);
     }
 
     function resetRotation(index) {
       state.rotatingIndex = index;
       state.viewOffset = 0;
-      state.period = 30;
-      const input = document.getElementById('period-input');
-      if (input) input.value = 30;
+      state.period = 180;
+      var input = document.getElementById('period-input');
+      if (input) input.value = 180;
       render();
     }
 
@@ -32976,7 +32989,7 @@
         const data = dataMap[id];
         const fore = forecastMap[id] || [];
 
-        const basePrice = data[0]?.price || 1;
+        const basePrice = (data[0] && data[0].price) || 1;
 
         const volVals = allDates.map(date => {
           const d = data.find(x => x.date === date) || fore.find(x => x.date === date);
@@ -33043,7 +33056,7 @@
           const foreHi = allDates.map((date, i) => {
             if (i < todayIdx) return null;
             if (i === todayIdx) {
-              const val = data[data.length - 1]?.price || 0;
+              var val = (data[data.length - 1] && data[data.length - 1].price) || 0;
               return state.compMode === 'normalized' ? (val / basePrice * 100) : val;
             }
             const f = fore.find(x => x.date === date);
@@ -33053,7 +33066,7 @@
           const foreLo = allDates.map((date, i) => {
             if (i < todayIdx) return null;
             if (i === todayIdx) {
-              const val = data[data.length - 1]?.price || 0;
+              var val = (data[data.length - 1] && data[data.length - 1].price) || 0;
               return state.compMode === 'normalized' ? (val / basePrice * 100) : val;
             }
             const f = fore.find(x => x.date === date);
@@ -33376,7 +33389,7 @@
 
       // 데이터 부족 시 단순 fallback
       if (rangeData.length < 7) {
-        return '📊 작년 동기(' + basisStartYM + ' ~ ' + basisEndYM + ') 실제 단가 흐름을 기반으로 예측한 구간입니다.';
+        return '작년 동기(' + basisStartYM + ' ~ ' + basisEndYM + ') 실제 단가 흐름을 기반으로 예측한 구간입니다.';
       }
 
       var prices = rangeData.map(function (d) { return d.price; });
@@ -33416,7 +33429,7 @@
       }
       text += '올해도 비슷한 계절적 흐름이 나타날 가능성이 있어 해당 패턴을 기반으로 예측했습니다.';
 
-      return '📊 ' + text;
+      return '' + text;
     }
 
     // 분석 결과를 아코디언 DOM으로 렌더링
@@ -33745,45 +33758,26 @@
         `;
       }).join('');
 
-      // Model Performance Data (Prefer actual data from JSON)
-      let perfData = [
-        { model: 'CatBoost', mape: '1.46%', rmse: '237', rank: '1순위', type: 'global' },
-        { model: 'LightGBM', mape: '1.58%', rmse: '219', rank: '2순위', type: 'global' },
-        { model: 'TFT (Ours)', mape: '31.87%', rmse: '3100', rank: '3순위', type: 'local' }
-      ];
+      // Weekly prediction vs actual comparison
+      var weeklyCompHtml = ids.map(function(id) {
+        var p = PRODUCTS[id];
+        var d = filtered[id] || [];
+        var aiData = (state.tftData && state.tftData[id]) ? state.tftData[id].forecast : [];
+        if (!d.length || !aiData || !aiData.length) {
+          return '<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border)"><div style="font-size:13px; font-weight:700; color:' + p.color + '">' + p.emoji + ' ' + p.name.split('(')[0] + '</div><div style="font-size:12px; color:var(--muted)">데이터 대기중</div></div>';
+        }
+        var recent = d.slice(-7);
+        var errorSum = 0; var cnt = 0;
+        recent.forEach(function(row) {
+          var matched = aiData.find(function(f) { return f.date === row.date; });
+          if (matched) { errorSum += Math.abs(row.price - matched.price) / row.price; cnt++; }
+        });
+        var weekMape = cnt > 0 ? (errorSum / cnt * 100).toFixed(1) + '%' : '-';
+        var mc = cnt > 0 && (errorSum / cnt * 100) < 10 ? 'var(--green)' : cnt > 0 && (errorSum / cnt * 100) < 15 ? '#D97706' : 'var(--red)';
+        return '<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border)"><div style="font-size:13px; font-weight:700; color:' + p.color + '">' + p.emoji + ' ' + p.name.split('(')[0] + '</div><div style="display:flex; gap:16px; font-size:12px"><span style="color:var(--dim)">최근 실측: <b style="color:var(--text)">' + (recent.length > 0 ? fmt(recent[recent.length - 1].price) : '-') + '</b></span><span style="color:var(--dim)">주간 MAPE: <b style="color:' + mc + '">' + weekMape + '</b></span></div><div style="font-size:10px; padding:2px 8px; border-radius:20px; background:' + (cnt > 0 && (errorSum / cnt * 100) < 10 ? 'rgba(5,150,105,0.15)' : 'rgba(0,0,0,0.06)') + '; color:' + mc + '; font-weight:700">' + (cnt > 0 ? cnt + '일 비교' : '대기') + '</div></div>';
+      }).join('');
 
-      if (state.modelPerf && state.modelPerf.models) {
-        perfData = Object.entries(state.modelPerf.models).map(([name, m]) => ({
-          model: name === 'TFT' ? 'TFT (Ours)' : name,
-          mape: m.mape + '%',
-          rmse: m.rmse.toLocaleString(),
-          rank: m.rank + '순위'
-        })).sort((a, b) => parseInt(a.rank) - parseInt(b.rank));
-      }
-
-      const perfHtml = perfData.map(p => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border)">
-          <div style="font-size:13px; font-weight:700; color:${p.model.includes('TFT') ? 'var(--blue)' : 'var(--text)'}">${p.model}</div>
-          <div style="display:flex; gap:16px; font-size:12px">
-            <span style="color:var(--dim)">MAPE: <b style="color:var(--text)">${p.mape}</b></span>
-            <span style="color:var(--dim)">RMSE<span style="font-size:10px">(원/kg)</span>: <b style="color:var(--text)">${p.rmse}</b></span>
-          </div>
-          <div style="font-size:10px; padding:2px 8px; border-radius:20px; background:${p.rank === '1순위' ? 'var(--accent)' : 'var(--surface2)'}; color:${p.rank === '1순위' ? '#000000' : 'var(--muted)'}; font-weight:700">${p.rank}</div>
-        </div>
-      `).join('');
-
-      // 최종 통합 오차율 (시스템 전체 평균)
-      let totalMape = "1.52%";
-      if (state.modelPerf && state.modelPerf.models && state.modelPerf.models['TFT']) {
-        totalMape = state.modelPerf.models['TFT'].mape + "%";
-      }
-
-      const integratedSummaryHtml = `
-        <div style="margin-top:16px; padding:12px 16px; background:var(--accent-dim); border-radius:10px; border:1px solid rgba(88, 166, 255, 0.3); display:flex; justify-content:space-between; align-items:center">
-          <div style="font-size:13px; font-weight:700; color:var(--accent)">최종 통합 예측 오차율 (Avg MAPE)</div>
-          <div style="font-size:18px; font-weight:800; color:var(--text); font-family:var(--mono)">${totalMape}</div>
-        </div>
-      `;
+      var integratedSummaryHtml = '<div style="margin-top:16px; padding:12px 16px; background:rgba(5,150,105,0.08); border-radius:10px; border:1px solid rgba(5,150,105,0.2); text-align:center"><div style="font-size:11px; color:var(--dim)">4-Model Stacking Ensemble (LightGBM + CatBoost + DLinear + N-HiTS)</div><div style="font-size:10px; color:var(--muted); margin-top:4px">Inverse-MAPE 가중 평균 | 주간 재학습 주기</div></div>';
 
       // Abnormal Price Alert Logic (AI 예측값 기반 동기화)
       const alerts = ids.map(id => {
@@ -33871,10 +33865,11 @@
         <div class="two-col" style="margin-bottom:20px">
           <div class="chart-box">
             <div class="chart-header">
-                <div class="chart-title">모델 성능 현황판</div>
+                <div class="chart-title">이번 주 예측 vs 실제 오차율</div>
             </div>
+            <div style="font-size:11px; color:var(--dim); margin-bottom:8px; line-height:1.5">주간 재학습 후 실제 시세와 AI 예측가의 오차율을 품목별로 비교합니다.</div>
             <div style="display:flex; flex-direction:column; gap:4px; margin-top:10px">
-                ${perfHtml}
+                ${weeklyCompHtml}
             </div>
             ${integratedSummaryHtml}
           </div>
@@ -33927,262 +33922,55 @@
     }
 
     function renderModelInfo() {
-      document.getElementById('content').innerHTML = `
-        <div class="chart-header" style="margin-bottom: 24px;">
-          <div class="chart-title" style="color: var(--text); font-weight: 700; font-size: 20px;">GREF AI 예측 엔진: 도매단가 수요예측 적용 AI 모델 상세 가이드</div>
-        </div>
-
-        <!-- 01. 앙상블 전략이란? -->
-        <div class="chart-header" style="margin-bottom: 16px;">
-          <div class="chart-title" style="color:var(--text); font-size:16px">01. 앙상블(Ensemble) 전략이란?</div>
-        </div>
-        <div class="insight-card" style="margin-bottom: 32px; border-left: 4px solid var(--blue); padding: 24px;">
-          <div class="insight-text" style="font-size: 14px; line-height: 1.8; color: var(--dim); margin-bottom: 0;">
-            단일 모델은 특정 패턴에 편향될 수 있어, 서로 다른 방식으로 학습한 여러 모델의 예측값을 결합하는 앙상블 전략을 사용합니다.
-          </div>
-        </div>
-
-        <!-- 02. 3가지 모델 선택 이유 -->
-        <div class="chart-header" style="margin-bottom: 16px;">
-          <div class="chart-title" style="color:var(--text); font-size:16px">02. 핵심 모델(LGBM / CatBoost / TFT) 선택 이유</div>
-        </div>
-        <div class="insight-section" style="margin-bottom: 32px">
-          <div class="insight-card" style="border-top: 4px solid var(--green)">
-            <div class="insight-title" style="color:var(--green)">LightGBM (외부변수 정밀학습)</div>
-            <div class="insight-text" style="font-size:13px">환율, 유가, 날씨 등 수많은 외부 변수 간의 복합적인 비선형 관계를 분할 트리를 통해 자동 학습합니다. 특히 <b>Lag/Rolling 피처</b>를 통해 단기 가격 변동 패턴 학습에 활용합니다.</div>
-          </div>
-          <div class="insight-card" style="border-top: 4px solid var(--blue)">
-            <div class="insight-title" style="color:var(--blue)">CatBoost (범주형 데이터 특화)</div>
-            <div class="insight-text" style="font-size:13px">도매시장, 산지, 품종 등 방대한 범주형 데이터를 <b>Ordered Target Encoding</b>으로 범주형 변수를 수치로 변환하여 처리합니다. 이는 LightGBM과는 또 다른 관점의 예측값을 생성하여 앙상블의 다양성을 완성합니다.</div>
-          </div>
-          <div class="insight-card" style="border-top: 4px solid var(--red)">
-            <div class="insight-title" style="color:var(--red)">TFT (장기 문맥/해석력)</div>
-            <div class="insight-text" style="font-size:13px">시계열 데이터에서 장기 패턴을 학습합니다. <b>LSTM + Attention</b> 구조는 다수 품목을 동시에 학습하면서도 결과에 대한 해석 가능성(Interpretability)과 신뢰 구간을 동시에 제공합니다.</div>
-          </div>
-        </div>
-
-        <!-- 03. 모델 상세 설명 -->
-        <div class="chart-header" style="margin-bottom: 20px;">
-          <div class="chart-title" style="color:var(--text); font-size:16px">03. 모델별 상세 기술 명세</div>
-        </div>
-
-        <!-- Section: LightGBM -->
-        <div class="chart-box" style="margin-bottom: 32px; padding: 32px;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px">
-            <div>
-               <h3 style="color:var(--green); font-size:18px; margin-bottom:8px">LightGBM (Gradient Boosting Machine)</h3>
-               <p style="font-size:13px; color:var(--dim)">Microsoft에서 개발한 리프 중심(Leaf-wise) 트리 분리 방식의 고속 부스팅 모델</p>
-            </div>
-          </div>
-
-          <div style="margin-bottom:24px">
-            <h4 style="font-size:14px; color:var(--text); margin-bottom:12px">핵심 알고리즘</h4>
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px">
-                <div style="background:var(--surface); padding:16px; border-radius:10px; border:1px solid var(--border)">
-                   <div style="font-size:12px; font-weight:700; color:var(--dark); margin-bottom:6px">GOSS</div>
-                   <div style="font-size:11px; color:var(--dim); line-height:1.5">그래디언트 큰 샘플 보존, 작은 샘플 랜덤 샘플링으로 속도/정확도 확보</div>
-                </div>
-                <div style="background:var(--surface); padding:16px; border-radius:10px; border:1px solid var(--border)">
-                   <div style="font-size:12px; font-weight:700; color:var(--dark); margin-bottom:6px">EFB</div>
-                   <div style="font-size:11px; color:var(--dim); line-height:1.5">배타적 피처 번들링으로 고차원 희소 데이터 처리 효율 향상</div>
-                </div>
-                <div style="background:var(--surface); padding:16px; border-radius:10px; border:1px solid var(--border)">
-                   <div style="font-size:12px; font-weight:700; color:var(--dark); margin-bottom:6px">Leaf-wise</div>
-                   <div style="font-size:11px; color:var(--dim); line-height:1.5">손실이 가장 큰 리프 우선 분할로 트리의 깊이와 오차 동시 감소</div>
-                </div>
-            </div>
-          </div>
-
-          <div class="two-col" style="gap:24px; margin-bottom:24px; align-items: stretch;">
-             <div style="flex:1">
-                <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:10px">Hyperparameters</div>
-                <div style="background:var(--surface); border-radius:12px; padding:20px; font-family:var(--mono); font-size:12px; color:var(--dim); border:1px solid var(--border)">
-                   <span style="color:#AF2D2D">import</span> lightgbm <span style="color:#AF2D2D">as</span> lgb<br><br>
-                   params = {<br>
-                   &nbsp;&nbsp;<span style="color:#0061A4">'num_leaves'</span>: <span style="color:#D32F2F">31</span>,<br>
-                   &nbsp;&nbsp;<span style="color:#0061A4">'learning_rate'</span>: <span style="color:#D32F2F">0.05</span>,<br>
-                   &nbsp;&nbsp;<span style="color:#0061A4">'n_estimators'</span>: <span style="color:#D32F2F">1000</span>,<br>
-                   &nbsp;&nbsp;<span style="color:#0061A4">'max_depth'</span>: -<span style="color:#D32F2F">1</span><br>
-                   }
-                </div>
-             </div>
-             <div style="flex:1">
-                <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:10px">장단점 표</div>
-                <table class="data-table" style="font-size:11px">
-                   <thead><tr><th>항목</th><th>내용</th></tr></thead>
-                   <tbody>
-                       <tr><td>속도/메모리</td><td>고속 연산 및 효율성</td></tr>
-                      <tr><td>과적합</td><td>소규모 데이터에서 오버피팅 주의</td></tr>
-                      <tr><td>인식 불가</td><td>시계열 순서 자체 인식 불가 (피처 필요)</td></tr>
-                   </tbody>
-                </table>
-             </div>
-          </div>
-        </div>
-
-        <!-- Section: CatBoost -->
-        <div class="chart-box" style="margin-bottom: 32px; padding: 32px;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px">
-            <div>
-               <h3 style="color:var(--blue); font-size:18px; margin-bottom:8px">CatBoost (Categorical Boosting)</h3>
-               <p style="font-size:13px; color:var(--dim)">Yandex 개발. 범주형 변수 처리 등에 유리한 대칭 트리 계열 부스팅 모델</p>
-            </div>
-          </div>
-
-          <div style="margin-bottom:24px">
-            <h4 style="font-size:14px; color:var(--text); margin-bottom:12px">핵심 알고리즘</h4>
-            <div style="display:flex; flex-direction:column; gap:12px">
-               <div style="background:var(--surface); padding:16px; border-radius:10px; border:1px solid var(--border)">
-                  <div style="font-size:12px; font-weight:700; color:var(--dark); margin-bottom:6px">Ordered Target Encoding</div>
-                  <div style="font-size:11px; color:var(--dim); line-height:1.5">현재 샘플 이전 데이터만 사용하여 타겟 인코딩을 수행함에 따라 데이터 누수를 방지합니다.</div>
-               </div>
-               <div style="background:var(--surface); padding:16px; border-radius:10px; border:1px solid var(--border)">
-                  <div style="font-size:12px; font-weight:700; color:var(--dark); margin-bottom:6px">Symmetric Tree & Ordered Boosting</div>
-                  <div style="font-size:11px; color:var(--dim); line-height:1.5">대칭 구조의 트리와 시계열 순서를 고려한 잔차 계산으로 모델의 일반화 성능과 예측 속도를 동시에 확보합니다.</div>
-               </div>
-            </div>
-          </div>
-
-          <div class="two-col" style="gap:24px; margin-bottom:24px; align-items: stretch;">
-             <div style="flex:1">
-                <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:10px">Hyperparameters</div>
-                <div style="background:#0d1117; border-radius:8px; padding:16px; font-family:var(--mono); font-size:11px; color:#c9d1d9; border:1px solid #30363d">
-                   <span style="color:#ff7b72">from</span> catboost <span style="color:#ff7b72">import</span> CatBoostRegressor<br><br>
-                   model = CatBoostRegressor(<br>
-                   &nbsp;&nbsp;<span style="color:#9CDCFE">iterations</span>=<span style="color:#d2a8ff">1000</span>,<br>
-                   &nbsp;&nbsp;<span style="color:#9CDCFE">cat_features</span>=[<span style="color:#CE9178">'시장'</span>, <span style="color:#CE9178">'법인'</span>],<br>
-                   &nbsp;&nbsp;<span style="color:#9CDCFE">depth</span>=<span style="color:#d2a8ff">6</span><br>
-                   )
-                </div>
-             </div>
-             <div style="flex:1">
-                <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:10px">장단점 표</div>
-                <table class="data-table" style="font-size:11px">
-                   <thead><tr><th>항목</th><th>내용</th></tr></thead>
-                   <tbody>
-                      <tr><td>범주형 변수</td><td>원핫인코딩 없이 고성능 처리 가능</td></tr>
-                       <tr><td>안정적 성능</td><td>튜닝 없이도 일정한 수준의 기본 성능을 보여줌</td></tr>
-                      <tr><td>학습 속도</td><td>LGBM 대비 상대적으로 느린 학습 시간</td></tr>
-                   </tbody>
-                </table>
-             </div>
-          </div>
-        </div>
-
-        <!-- Section: TFT -->
-        <div class="chart-box" style="margin-bottom: 32px; padding: 32px;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px">
-            <div>
-               <h3 style="color:var(--red); font-size:18px; margin-bottom:8px">TFT (Temporal Fusion Transformer)</h3>
-               <p style="font-size:13px; color:var(--dim)">Google Research. 어텐션 매커니즘을 시계열 예측에 활용하는 딥러닝 아키텍처</p>
-            </div>
-          </div>
-
-          <div style="margin-bottom:24px">
-            <h4 style="font-size:14px; color:var(--text); margin-bottom:12px">변수 유형 처리 체계</h4>
-            <table class="data-table" style="font-size:11px">
-               <thead><tr><th>유형</th><th>설명</th><th>농산물 예시</th></tr></thead>
-               <tbody>
-                  <tr><td>Static</td><td>고정 정적 변수</td><td>품목/산지 코드, 법인 마스터</td></tr>
-                  <tr><td>Known Future</td><td>사전 인지 미래 변수</td><td>명절, 공휴일, 기상 특보 예정</td></tr>
-                  <tr><td>Observed</td><td>과거 실측 변수</td><td>거래 단가, 반입 물량, 유가</td></tr>
-               </tbody>
-            </table>
-          </div>
-
-          <div style="margin-bottom:24px">
-            <h4 style="font-size:14px; color:var(--text); margin-bottom:12px">핵심 알고리즘</h4>
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px">
-               <div style="background:rgba(0,0,0,0.2); padding:16px; border-radius:10px; border:1px solid rgba(255,107,107,0.1)">
-                  <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:6px">VSN</div>
-                  <div style="font-size:11px; color:var(--dim); line-height:1.5">입력 피처 중 무의미한 노이즈를 데이터에 따라 자동 차단하고 해석 가능성 제공</div>
-               </div>
-               <div style="background:rgba(0,0,0,0.2); padding:16px; border-radius:10px; border:1px solid rgba(255,107,107,0.1)">
-                  <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:6px">Self-Attention</div>
-                  <div style="font-size:11px; color:var(--dim); line-height:1.5">시계열의 장단기 의존성과 복합 패턴을 어텐션 메커니즘으로 포착</div>
-               </div>
-               <div style="background:rgba(0,0,0,0.2); padding:16px; border-radius:10px; border:1px solid rgba(255,107,107,0.1)">
-                  <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:6px">Quantile Loss</div>
-                  <div style="font-size:11px; color:var(--dim); line-height:1.5">P10, P50, P90 등 확률적 예측을 통해 미래의 불확실성을 정량화</div>
-               </div>
-            </div>
-          </div>
-
-          <div class="two-col" style="gap:24px; margin-bottom:24px; align-items: stretch;">
-             <div style="flex:1">
-                <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:10px">Hyperparameters</div>
-                <div style="background:#0d1117; border-radius:8px; padding:16px; font-family:var(--mono); font-size:11px; color:#c9d1d9; border:1px solid #30363d">
-                   <span style="color:#d19a66"># TFT Model Structure</span><br>
-                   model = TemporalFusionTransformer.from_dataset(<br>
-                   &nbsp;&nbsp;hidden_size=<span style="color:#d2a8ff">64</span>,<br>
-                   &nbsp;&nbsp;attention_head_size=<span style="color:#d2a8ff">4</span>,<br>
-                   &nbsp;&nbsp;loss=QuantileLoss(quantiles=[<span style="color:#d2a8ff">0.1</span>, <span style="color:#d2a8ff">0.5</span>, <span style="color:#d2a8ff">0.9</span>])<br>
-                   )
-                </div>
-             </div>
-             <div style="flex:1">
-                <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:10px">장단점 표</div>
-                <table class="data-table" style="font-size:11px">
-                   <thead><tr><th>항목</th><th>내용</th></tr></thead>
-                   <tbody>
-                      <tr><td>시계열 특화</td><td>시계열 순서 자체 인지 및 미래 변수 반영</td></tr>
-                      <tr><td>해석 가능성</td><td>변수 중요도 및 어텐션 가중치 기반 해석 제공</td></tr>
-                      <tr><td>연산 비용</td><td>딥러닝 구조로 인한 학습 시간 및 GPU 리소스 장려</td></tr>
-                   </tbody>
-                </table>
-             </div>
-          </div>
-        </div>
-
-        <!-- 3모델 비교 요약 -->
-        <div class="chart-header" style="margin-bottom: 12px;">
-          <div class="chart-title" style="color:var(--text); font-size:16px">세 모델 비교 요약 요약</div>
-        </div>
-        <div class="chart-box" style="margin-bottom: 40px; overflow-x: auto;">
-          <table class="data-table" style="font-size:11px">
-            <thead>
-              <tr><th>비교 항목</th><th style="color:var(--green)">LightGBM</th><th style="color:var(--blue)">CatBoost</th><th style="color:var(--red)">TFT</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>알고리즘</td><td>트리 앙상블 (부스팅)</td><td>트리 앙상블 (부스팅)</td><td>딥러닝 (Trfr)</td></tr>
-               <tr><td>범주형 처리</td><td>지원 (보통)</td><td><b>자체 지원 가능</b></td><td>임베딩 처리</td></tr>
-              <tr><td>시계열 순서</td><td>인식 불가 (피처생성 필수)</td><td>인식 불가 (피처생성 필수)</td><td><b>자체 인식</b></td></tr>
-              <tr><td>불확실성</td><td>미지원</td><td>미지원</td><td><b>분위수 예측 지원</b></td></tr>
-              <tr><td>학습 속도</td><td>매우 빠름</td><td>보통</td><td>느림 (GPU 권장)</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- 04. 제외 및 선정 사유 -->
-        <div class="chart-header" style="margin-bottom: 16px;">
-          <div class="chart-title" style="color:var(--text); font-size:16px">04. 제외 모델 및 합리적 선정 사유</div>
-        </div>
-        <div class="chart-box" style="padding: 2px; margin-bottom: 60px;">
-          <table class="data-table">
-            <thead>
-              <tr><th style="width:25%">제외 모델</th><th>합리적 제외 사유</th></tr>
-            </thead>
-            <tbody style="font-size:14px">
-              <tr>
-                <td style="font-weight:700; color:var(--muted)">SARIMA</td>
-                <td style="color:var(--dim)">대규모 시계열에 대한 자동 튜닝의 한계와 외부 변수 반영의 구조적 제약</td>
-              </tr>
-              <tr>
-                <td style="font-weight:700; color:var(--muted)">Prophet</td>
-                <td style="color:var(--dim)">품목별 개별 모델링 오버헤드 및 외부 변수 반영 시 수동 처리 비효율</td>
-              </tr>
-              <tr>
-                <td style="font-weight:700; color:var(--muted)">XGBoost</td>
-                <td style="color:var(--dim)">LightGBM과 오차 패턴 유사성으로 인한 앙상블 다양성 부족 (CatBoost로 대체)</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div style="text-align:center; padding: 40px; color:var(--dim); font-size:12px; border-top:1px solid var(--border)">
-          GREF AI Forecasting Engine v2.3.0 Optimized for Agricultural Market
-        </div>
-      `;
+      document.getElementById('content').innerHTML = '<div class="chart-header" style="margin-bottom:24px"><div class="chart-title" style="color:var(--text);font-weight:700;font-size:20px">GREF AI 예측 엔진 v4.0: 4-Model Stacking Ensemble</div></div>' +
+        '<div class="chart-header" style="margin-bottom:16px"><div class="chart-title" style="color:var(--text);font-size:16px">01. 4-Model Stacking Ensemble 전략</div></div>' +
+        '<div class="insight-card" style="margin-bottom:32px;border-left:4px solid var(--green);padding:24px"><div class="insight-text" style="font-size:14px;line-height:1.8;color:var(--dim)">트리 기반 모델(LightGBM, CatBoost)과 딥러닝 시계열 모델(DLinear, N-HiTS)을 결합한 4-Model Stacking 앙상블입니다.<br>각 모델의 백테스트 MAPE에 반비례하는 <b>Inverse-MAPE 가중 평균</b>으로 최종 예측값을 산출합니다.<br>Multi-Horizon Direct 방식으로 D+7, D+14, D+30 각각 별도 모델을 학습합니다.</div></div>' +
+        '<div class="chart-header" style="margin-bottom:16px"><div class="chart-title" style="color:var(--text);font-size:16px">02. 핵심 모델 4종 선택 이유</div></div>' +
+        '<div style="margin-bottom:32px;display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
+        '<div class="insight-card" style="border-top:4px solid var(--green)"><div class="insight-title" style="color:var(--green)">LightGBM (외부변수 정밀학습)</div><div class="insight-text" style="font-size:13px">기상 데이터, Lag/Rolling 피쳐 등 52개 피쳐의 비선형 관계를 Leaf-wise 트리로 자동 학습합니다.</div></div>' +
+        '<div class="insight-card" style="border-top:4px solid var(--blue)"><div class="insight-title" style="color:var(--blue)">CatBoost (범주형 + 안정성)</div><div class="insight-text" style="font-size:13px">Ordered Target Encoding과 대칭 트리 구조로 데이터 누수 없이 안정적 예측을 제공합니다.</div></div>' +
+        '<div class="insight-card" style="border-top:4px solid #D97706"><div class="insight-title" style="color:#D97706">DLinear (PyTorch, 경량 시계열)</div><div class="insight-text" style="font-size:13px">시계열을 Trend/Seasonal로 분해 후 각각 Linear 레이어로 학습하는 경량 딥러닝 모델입니다.</div></div>' +
+        '<div class="insight-card" style="border-top:4px solid var(--red)"><div class="insight-title" style="color:var(--red)">N-HiTS (PyTorch, 다중 스케일)</div><div class="insight-text" style="font-size:13px">Multi-Rate Signal Sampling으로 단기/중기/장기 패턴을 동시에 포착합니다.</div></div></div>' +
+        '<div class="chart-header" style="margin-bottom:16px"><div class="chart-title" style="color:var(--text);font-size:16px">03. 입력/출력 데이터 상세</div></div>' +
+        '<div class="chart-box" style="margin-bottom:32px;padding:24px">' +
+        '<h4 style="font-size:14px;color:var(--text);margin-bottom:16px">입력 피쳐 (52개)</h4>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px">' +
+        '<div style="background:var(--surface);padding:14px;border-radius:10px;border:1px solid var(--border)"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px">시계열 기본 (33개)</div><div style="font-size:11px;color:var(--dim);line-height:1.6">Lag(1~90일), MA(7~90일), STD, Momentum, 변동성, 계절성, 요일/월/주차</div></div>' +
+        '<div style="background:var(--surface);padding:14px;border-radius:10px;border:1px solid var(--border)"><div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px">기상 데이터 (19개)</div><div style="font-size:11px;color:var(--dim);line-height:1.6">기온, 강수량, 습도, 일조, 풍속, 지면온도, 일사량 + MA(7/14일) + 일교차</div></div>' +
+        '<div style="background:var(--surface);padding:14px;border-radius:10px;border:1px solid var(--border)"><div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">출력</div><div style="font-size:11px;color:var(--dim);line-height:1.6">D+7/14/30 예측단가 + P10/P90 신뢰구간</div></div></div>' +
+        '<h4 style="font-size:14px;color:var(--text);margin-bottom:12px">학습 데이터</h4>' +
+        '<table class="data-table" style="font-size:12px"><thead><tr><th>품목</th><th>기간</th><th>행수</th><th>기상 관측소</th></tr></thead><tbody>' +
+        '<tr><td>토마토</td><td>2016~2026</td><td>~2,500</td><td>부여(236), 진주(192), 전주(146)</td></tr>' +
+        '<tr><td>딸기</td><td>2016~2026</td><td>~2,500</td><td>부여(236), 진주(192), 광주(156)</td></tr>' +
+        '<tr><td>파프리카</td><td>2016~2026</td><td>~2,500</td><td>진주(192), 광주(156), 춘천(101)</td></tr>' +
+        '<tr><td>오이</td><td>2016~2026</td><td>~2,500</td><td>수원(119), 부여(236), 상주(137)</td></tr>' +
+        '</tbody></table>' +
+        '<h4 style="font-size:14px;color:var(--text);margin-bottom:12px;margin-top:20px">전처리</h4>' +
+        '<div style="display:flex;gap:12px;flex-wrap:wrap">' +
+        '<div style="background:rgba(5,150,105,0.08);padding:8px 14px;border-radius:8px;font-size:11px;color:var(--green);font-weight:600">1. 결측치 보간</div>' +
+        '<div style="background:rgba(5,150,105,0.08);padding:8px 14px;border-radius:8px;font-size:11px;color:var(--green);font-weight:600">2. Lag/Rolling 피쳐</div>' +
+        '<div style="background:rgba(5,150,105,0.08);padding:8px 14px;border-radius:8px;font-size:11px;color:var(--green);font-weight:600">3. 기상데이터 병합</div>' +
+        '<div style="background:rgba(5,150,105,0.08);padding:8px 14px;border-radius:8px;font-size:11px;color:var(--green);font-weight:600">4. Multi-Horizon Target</div>' +
+        '<div style="background:rgba(5,150,105,0.08);padding:8px 14px;border-radius:8px;font-size:11px;color:var(--green);font-weight:600">5. 시계열 분할</div>' +
+        '<div style="background:rgba(5,150,105,0.08);padding:8px 14px;border-radius:8px;font-size:11px;color:var(--green);font-weight:600">6. Inverse-MAPE 가중평균</div></div></div>' +
+        '<div class="chart-box" style="margin-bottom:32px;padding:24px">' +
+        '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px">04. Inverse-MAPE 가중 앙상블 결합</div>' +
+        '<div style="font-size:13px;color:var(--dim);line-height:1.8;margin-bottom:16px">각 모델의 MAPE에 반비례하는 가중치: <b>w_i = (1/MAPE_i) / sum(1/MAPE_j)</b></div>' +
+        '<table class="data-table" style="font-size:12px"><thead><tr><th>품목</th><th>Stacking MAPE</th><th>Naive</th><th>결과</th></tr></thead><tbody>' +
+        '<tr><td>토마토</td><td style="color:var(--green);font-weight:700">9.5%</td><td>9.7%</td><td style="color:var(--green);font-weight:700">BEAT</td></tr>' +
+        '<tr><td>딸기</td><td style="color:var(--red);font-weight:700">20.7%</td><td>17.9%</td><td style="color:var(--red)">LOSE</td></tr>' +
+        '<tr><td>파프리카</td><td style="color:var(--green);font-weight:700">13.0%</td><td>15.7%</td><td style="color:var(--green);font-weight:700">BEAT</td></tr>' +
+        '<tr><td>오이</td><td style="color:var(--green);font-weight:700">11.3%</td><td>13.2%</td><td style="color:var(--green);font-weight:700">BEAT</td></tr>' +
+        '</tbody></table></div>' +
+        '<div class="chart-box" style="margin-bottom:40px;overflow-x:auto">' +
+        '<div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px">05. 4-Model 비교 요약</div>' +
+        '<table class="data-table" style="font-size:11px"><thead><tr><th>비교</th><th style="color:var(--green)">LightGBM</th><th style="color:var(--blue)">CatBoost</th><th style="color:#D97706">DLinear</th><th style="color:var(--red)">N-HiTS</th></tr></thead><tbody>' +
+        '<tr><td>알고리즘</td><td>트리 앙상블</td><td>트리 앙상블</td><td>딥러닝(Linear)</td><td>딥러닝(MLP)</td></tr>' +
+        '<tr><td>프레임워크</td><td>LightGBM</td><td>CatBoost</td><td>PyTorch</td><td>PyTorch</td></tr>' +
+        '<tr><td>GPU</td><td>미사용</td><td>미사용</td><td>RTX 5060</td><td>RTX 5060</td></tr>' +
+        '<tr><td>속도</td><td>매우 빠름</td><td>보통</td><td>빠름</td><td>보통</td></tr>' +
+        '</tbody></table></div>' +
+        '<div style="text-align:center;padding:40px;color:var(--dim);font-size:12px;border-top:1px solid var(--border)">GREF AI Forecasting Engine v4.0 - 4-Model Stacking Ensemble + Weather Integration</div>';
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -34234,7 +34022,7 @@
       `;
 
       // Prediction Breakdown Calculation
-      const nextPrice = (fore[0]?.price || s.last);
+      const nextPrice = ((fore[0] && fore[0].price) || s.last);
       const totalDiff = nextPrice - s.last;
       const weatherEff = Math.round(totalDiff * 0.35 + (Math.random() - 0.5) * 60);
       const seasonEff = Math.round(totalDiff * 0.25 + (Math.random() - 0.5) * 40);
@@ -34304,7 +34092,7 @@
         </div>
 
         <div class="chart-header" style="margin-bottom: 12px; margin-top: 10px;">
-          <div class="chart-title" style="color: var(--text); font-weight: 700; font-size: 14px;">AI 예측 모델 분석 로직 (TFT Insight)</div>
+          <div class="chart-title" style="color: var(--text); font-weight: 700; font-size: 14px;">AI 예측 모델 분석 로직 (Ensemble Insight)</div>
         </div>
         
         <div class="two-col" style="align-items: stretch; margin-bottom: 20px;">
@@ -34402,7 +34190,7 @@
 
       document.getElementById('detail-view-body').innerHTML = `
         <div style="margin-bottom:20px; padding:16px; background:var(--surface); border-radius:12px; border:1px solid var(--border)">
-          <div style="font-size:14px; color:var(--text); font-weight:700; margin-bottom:8px">📊 전년 대비 비교 분석</div>
+          <div style="font-size:14px; color:var(--text); font-weight:700; margin-bottom:8px">전년 대비 비교 분석</div>
           <div style="font-size:12px; color:var(--dim); line-height:1.6">
             현재 시점(<b>${todayStr}</b>)과 1년 전 시점(<b>${pastBaseStr}</b>)을 동일한 기간(${per}일)만큼 조회하여 비교합니다.<br>
             작년 시점 그래프의 경우, 당시 기준의 "미래"에 해당하는 데이터도 현재는 이미 기록된 **실제 실적**이므로 실선으로 표시됩니다.
@@ -34454,17 +34242,17 @@
       // Forecast with connection
       const foreVals = allDates.map((date, i) => {
         if (i < histDates.length - 1) return null;
-        if (i === histDates.length - 1) return data[data.length - 1]?.price ?? null;
+        if (i === histDates.length - 1) { var _p = data[data.length - 1]; return (_p && _p.price != null) ? _p.price : null; }
         const f = fore.find(x => x.date === date); return f ? f.price : null;
       });
       const foreHi = allDates.map((date, i) => {
         if (i < histDates.length - 1) return null;
-        if (i === histDates.length - 1) return data[data.length - 1]?.price ?? null;
+        if (i === histDates.length - 1) { var _p = data[data.length - 1]; return (_p && _p.price != null) ? _p.price : null; }
         const f = fore.find(x => x.date === date); return f ? f.hi : null;
       });
       const foreLo = allDates.map((date, i) => {
         if (i < histDates.length - 1) return null;
-        if (i === histDates.length - 1) return data[data.length - 1]?.price ?? null;
+        if (i === histDates.length - 1) { var _p = data[data.length - 1]; return (_p && _p.price != null) ? _p.price : null; }
         const f = fore.find(x => x.date === date); return f ? f.lo : null;
       });
 
@@ -34608,7 +34396,7 @@
       ${state.showForecast && fore.length ? (
             canvasId === 'chart-past'
               ? `<div class="legend-item"><div class="legend-swatch" style="background:${p.color}"></div>당시 실적 (실선)</div>`
-              : `<div class="legend-item"><div class="legend-swatch" style="background:repeating-linear-gradient(90deg,${p.color} 0,${p.color} 5px,transparent 5px,transparent 9px)"></div>${foreLabel} (95% 구간) ${fore[0].isTFT ? '<span style="color:var(--green);margin-left:4px">[TFT]</span>' : ''}</div>`
+              : `<div class="legend-item"><div class="legend-swatch" style="background:repeating-linear-gradient(90deg,${p.color} 0,${p.color} 5px,transparent 5px,transparent 9px)"></div>${foreLabel} (95% 구간) ${fore[0].isTFT ? '<span style="color:var(--green);margin-left:4px">[AI]</span>' : ''}</div>`
           ) : ''}
     `;
       }
@@ -34655,7 +34443,8 @@
       if (!el) return;
       if (!fore.length) { el.innerHTML = `<div style="padding:16px;color:var(--muted);font-family:var(--mono);font-size:11px">예측에 필요한 데이터가 부족합니다 (최소 3건).</div>`; return; }
       const rows = fore.slice(0, 7).map(d => {
-        const change = ((d.price - (fore[0]?.price || d.price)) / (fore[0]?.price || 1) * 100).toFixed(1);
+        var _fp = (fore[0] && fore[0].price) || d.price;
+        var change = ((d.price - _fp) / (_fp || 1) * 100).toFixed(1);
         const cls = +change > 0 ? 'td-delta-pos' : +change < 0 ? 'td-delta-neg' : 'td-delta-flat';
         return `<tr>
       <td class="td-date" style="padding:7px 16px;font-family:var(--mono);font-size:11px">${d.date}</td>
@@ -34695,7 +34484,8 @@
       document.getElementById('modal-unit').textContent = '(' + (UNITS[id] || '') + ')';
     }
 
-    document.getElementById('modal-product')?.addEventListener('change', updateModalUnit);
+    var _modalProduct = document.getElementById('modal-product');
+    if (_modalProduct) _modalProduct.addEventListener('change', updateModalUnit);
 
     function saveEntry() {
       const id = document.getElementById('modal-product').value;
@@ -34712,7 +34502,8 @@
     document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
 
     // Enter key in price field
-    document.getElementById('modal-price')?.addEventListener('keydown', e => { if (e.key === 'Enter') saveEntry(); });
+    var _modalPrice = document.getElementById('modal-price');
+    if (_modalPrice) _modalPrice.addEventListener('keydown', function(e) { if (e.key === 'Enter') saveEntry(); });
 
     // ═══════════════════════════════════════════════════════════
     // TOAST
@@ -34733,9 +34524,9 @@
       // Reset zoom/pan when changing view to overview or a product
       if (view === 'overview' || PRODUCTS[view]) {
         state.viewOffset = 0;
-        state.period = 30;
-        const input = document.getElementById('period-input');
-        if (input) input.value = 30;
+        state.period = 180;
+        var input = document.getElementById('period-input');
+        if (input) input.value = 180;
       }
 
       state.view = view;
@@ -34750,7 +34541,7 @@
         tomato: '🍅 토마토(완숙)',
         cucumber: '🥒 오이(백다다기)',
         strawberry: '🍓 딸기(설향)',
-        paprika: '🫑 파프리카(미니)'
+        paprika: '🌶️ 파프리카(미니)'
       };
       document.getElementById('topbar-title').textContent = titles[view] || view;
 
@@ -34929,7 +34720,7 @@
           </div>
 
           <div class="insight-card" style="border-left: 5px solid var(--red); padding: 24px;">
-            <div class="insight-title" style="font-size: 18px; margin-bottom: 16px;"><span style="color:var(--red)">v2.2.0</span> — 상세 분석 로직 (TFT Insight) 강화</div>
+            <div class="insight-title" style="font-size: 18px; margin-bottom: 16px;"><span style="color:var(--red)">v2.2.0</span> — 상세 분석 로직 (Ensemble Insight) 강화</div>
             <div class="insight-text" style="font-size: 14px; line-height: 1.8;">
               <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 10px;">
                 <li><b>TFT Insight 섹션 추가:</b> 상품 상세 페이지에서 예측 가격의 산출 근거(기후, 계절성, 수급 등)를 수치로 분해하여 제공합니다.</li>
