@@ -174,16 +174,18 @@ def generate():
         vols7 = [h.get('volume', 0) for h in hist_list[-7:]]
         avg_vol = int(sum(vols7) / len(vols7)) if vols7 else 0
 
-        # AI 예측 사용 가능 여부 확인 (stale 감지: 예측 시작일이 기준일 이전이면 만료)
+        # AI 예측 사용 가능 여부 확인 (stale 감지: 예측 마지막일이 기준일 이전이면 만료)
         use_ai = False
         if lgbm_dated and name in lgbm_dated.get('forecasts', {}):
             ai_fc = lgbm_dated['forecasts'][name]
             if ai_fc:
-                first_fc_date = ai_fc[0].get('date', '')
-                if first_fc_date > last_date_str:
+                last_fc_date = ai_fc[-1].get('date', '')
+                if last_fc_date > last_date_str:
+                    use_ai = True
+                    ai_fc = [f for f in ai_fc if f.get('date', '') > last_date_str]
                     use_ai = True
                 else:
-                    print(f"         → AI 예측 만료 (시작={first_fc_date}, 기준={last_date_str}) → fallback")
+                    print(f"         → AI 예측 만료 (마지막={first_fc_date}, 기준={last_date_str}) → fallback")
 
         if use_ai:
             # 실제 AI 모델 예측 사용
