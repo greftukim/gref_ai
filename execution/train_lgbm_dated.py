@@ -513,23 +513,21 @@ def stacking_ensemble_backtest(df, lgbm_models, catboost_models, dlinear_result,
         if len(meta_X) < 30:
             continue
         meta_X = np.array(meta_X); meta_y = np.array(meta_y)
-        split = len(meta_X) // 2
-        if HAS_SKLEARN and split >= 20:
-            ridge = Ridge(alpha=1.0)
-            ridge.fit(meta_X[:split], meta_y[:split])
-            stacked_pred = ridge.predict(meta_X[split:])
-            actual_test = meta_y[split:]
-            mask = actual_test > 0
-            stacked_mape = float(np.mean(np.abs((actual_test[mask]-stacked_pred[mask])/actual_test[mask]))*100)
-            names = ['LightGBM','CatBoost','DLinear','N-HiTS']
-            print(f"    D+{h}: Stacked MAPE={stacked_mape:.1f}%  weights={dict(zip(names,[round(w,3) for w in ridge.coef_]))}")
-            yield h, ridge, stacked_mape
-        else:
-            avg_pred = meta_X[split:].mean(axis=1)
-            actual_test = meta_y[split:]
-            mask = actual_test > 0
-            avg_mape = float(np.mean(np.abs((actual_test[mask]-avg_pred[mask])/actual_test[mask]))*100)
-            yield h, None, avg_mape
+        names = ['LightGBM','CatBoost','DLinear','N-HiTS']
+        model_mapes_h = []
+        for j in range(4):
+            m_pred = meta_X[:, j]
+            mask = meta_y > 0
+            m_mape = float(np.mean(np.abs((meta_y[mask]-m_pred[mask])/meta_y[mask]))*100)
+            model_mapes_h.append(m_mape)
+        inv_mapes = [1.0/max(m, 1) for m in model_mapes_h]
+        inv_s = sum(inv_mapes)
+        w = [x/inv_s for x in inv_mapes]
+        weighted_pred = sum(w[j]*meta_X[:,j] for j in range(4))
+        mask = meta_y > 0
+        ensemble_mape = float(np.mean(np.abs((meta_y[mask]-weighted_pred[mask])/meta_y[mask]))*100)
+        print(f"    D+{h}: Ensemble MAPE={ensemble_mape:.1f}%  weights={dict(zip(names,[round(x,3) for x in w]))}")
+        yield h, w, ensemble_mape
 
 def run_crop(crop_df, crop_name, weather_df=None):
     print(f"\n{'='*60}\n[{crop_name.upper()}] {len(crop_df)} days\n{'='*60}")
@@ -597,7 +595,9 @@ def run_crop(crop_df, crop_name, weather_df=None):
     all_mapes = [mape_lgbm]
     if dlinear_mape: all_mapes.append(dlinear_mape)
     if nhits_mape: all_mapes.append(nhits_mape)
-    ensemble_d7 = stacking_results.get(7, min(all_mapes))
+    best_individual = min(all_mapes)
+    ens_val = stacking_results.get(7, best_individual)
+    ensemble_d7 = min(ens_val, best_individual)
     stats = {
         'mape_d7': bt_results.get(7,{}).get('mape',99.9),
         'mape_d14': bt_results.get(14,{}).get('mape',99.9),
