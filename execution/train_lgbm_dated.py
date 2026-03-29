@@ -413,9 +413,10 @@ def backtest_multihorizon(df, models, avail_features, test_days=TEST_DAYS):
         results[h] = {'mape': mape, 'rmse': rmse, 'n_evals': len(actuals)}
     return results
 
-def daily_backtest_lgbm(df, models, avail_features, test_days=TEST_DAYS):
+def daily_backtest_lgbm(df, models, avail_features, test_days=TEST_DAYS, backtest_mape=10.0):
     test_start = len(df) - test_days
     results = []
+    mf = backtest_mape / 100.0 * 0.7  # short-term factor for D+7
     for i in range(test_days):
         idx = test_start + i
         if idx >= len(df):
@@ -424,25 +425,38 @@ def daily_backtest_lgbm(df, models, avail_features, test_days=TEST_DAYS):
         X = df.iloc[idx:idx+1][avail_features].values
         best_h = min(models.keys())
         pred = max(float(models[best_h]['med'].predict(X)[0]), 100)
-        lo = float(models[best_h]['lo'].predict(X)[0])
-        hi = float(models[best_h]['hi'].predict(X)[0])
+        lo = round(max(pred * (1 - mf), pred * 0.3))
+        hi = round(pred * (1 + mf))
         err_pct = abs(actual-pred)/actual*100 if actual > 0 else None
         results.append({'date': row['date'].strftime('%Y-%m-%d'), 'actual': round(actual),
-            'predicted': round(pred), 'lo': round(max(lo,50)), 'hi': round(hi),
+            'predicted': round(pred), 'lo': lo, 'hi': hi,
             'error_pct': round(err_pct,1) if err_pct else None, 'type': 'direct'})
     return results
 
+def _mape_factor(day, base_mape):
+    """MAPE-based confidence interval factor that grows with forecast horizon.
+    Returns a multiplier: hi = price*(1+factor), lo = price*(1-factor)."""
+    m = base_mape / 100.0  # e.g. 15% -> 0.15
+    if day <= 7:
+        scale = 0.7
+    elif day <= 30:
+        scale = 0.7 + 0.3 * (day - 7) / 23       # 0.7 → 1.0
+    elif day <= 90:
+        scale = 1.0 + 0.3 * (day - 30) / 60       # 1.0 → 1.3
+    else:
+        scale = 1.3 + 0.2 * min(1.0, (day - 90) / 90)  # 1.3 → 1.5
+    return m * scale
+
 def generate_future_forecast(df, lgbm_models, dlinear_result, avail_features,
                              weekly_avg, forecast_days=FORECAST_DAYS,
-                             ensemble_w_lgbm=0.5, ensemble_w_dl=0.5):
+                             ensemble_w_lgbm=0.5, ensemble_w_dl=0.5,
+                             backtest_mape=10.0):
     last_date = df['date'].max(); last_row = df.iloc[-1:]
     forecast_rows = []
     lgbm_preds = {}
     for h in sorted(lgbm_models.keys()):
         X = last_row[avail_features].values
-        lgbm_preds[h] = {'med': float(lgbm_models[h]['med'].predict(X)[0]),
-            'lo': float(lgbm_models[h]['lo'].predict(X)[0]),
-            'hi': float(lgbm_models[h]['hi'].predict(X)[0])}
+        lgbm_preds[h] = {'med': float(lgbm_models[h]['med'].predict(X)[0])}
     dlinear_preds = {}
     if dlinear_result and 'future_prices' in dlinear_result:
         for i, price in enumerate(dlinear_result['future_prices']):
@@ -454,31 +468,29 @@ def generate_future_forecast(df, lgbm_models, dlinear_result, avail_features,
         if day <= sorted_horizons[0]:
             t = day / sorted_horizons[0]
             lgbm_med = last_price*(1-t) + lgbm_preds[sorted_horizons[0]]['med']*t
-            lgbm_lo  = last_price*(1-t) + lgbm_preds[sorted_horizons[0]]['lo']*t
-            lgbm_hi  = last_price*(1-t) + lgbm_preds[sorted_horizons[0]]['hi']*t
         elif day >= sorted_horizons[-1]:
             woy = curr_date.isocalendar()[1]
             seasonal = weekly_avg.get(woy, last_price)
             t = min(1.0, (day-sorted_horizons[-1])/150)
             lgbm_med = lgbm_preds[sorted_horizons[-1]]['med']*(1-t) + seasonal*t
-            lgbm_lo  = lgbm_preds[sorted_horizons[-1]]['lo']*(1-t) + seasonal*0.85*t
-            lgbm_hi  = lgbm_preds[sorted_horizons[-1]]['hi']*(1-t) + seasonal*1.15*t
         else:
             for j in range(len(sorted_horizons)-1):
                 h1, h2 = sorted_horizons[j], sorted_horizons[j+1]
                 if h1 <= day <= h2:
                     t = (day-h1)/(h2-h1)
                     lgbm_med = lgbm_preds[h1]['med']*(1-t) + lgbm_preds[h2]['med']*t
-                    lgbm_lo  = lgbm_preds[h1]['lo']*(1-t)  + lgbm_preds[h2]['lo']*t
-                    lgbm_hi  = lgbm_preds[h1]['hi']*(1-t)  + lgbm_preds[h2]['hi']*t
                     break
         if day in dlinear_preds and dlinear_preds[day] > 0:
             final_med = lgbm_med*ensemble_w_lgbm + dlinear_preds[day]*ensemble_w_dl
         else:
             final_med = lgbm_med
-        final_med = max(final_med, 100); final_lo = max(lgbm_lo, final_med*0.3)
+        final_med = max(final_med, 100)
+        # MAPE-based confidence interval
+        mf = _mape_factor(day, backtest_mape)
+        final_hi = round(final_med * (1 + mf))
+        final_lo = round(max(final_med * (1 - mf), final_med * 0.3))
         forecast_rows.append({'date': curr_date.strftime('%Y-%m-%d'),
-            'price': round(final_med), 'hi': round(lgbm_hi), 'lo': round(final_lo)})
+            'price': round(final_med), 'hi': final_hi, 'lo': final_lo})
     return forecast_rows
 
 def stacking_ensemble_backtest(df, lgbm_models, catboost_models, dlinear_result, nhits_result, avail_features, test_days=TEST_DAYS):
@@ -553,7 +565,6 @@ def run_crop(crop_df, crop_name, weather_df=None):
     bt_results = backtest_multihorizon(df, lgbm_models, avail)
     for h, r in bt_results.items():
         print(f"    D+{h:2d}: MAPE={r['mape']:.1f}%  RMSE={r['rmse']:,.0f}")
-    daily_bt = daily_backtest_lgbm(df, lgbm_models, avail)
     mape_lgbm = bt_results.get(min(bt_results.keys()), {}).get('mape', 99.9)
     print("\n  [2/4 CatBoost]")
     catboost_models = train_catboost_multihorizon(df, avail)
@@ -582,9 +593,6 @@ def run_crop(crop_df, crop_name, weather_df=None):
     w_total = w_lgbm + w_dl
     if w_total > 0:
         w_lgbm /= w_total; w_dl /= w_total
-    print("\n  [Future Forecast]")
-    forecast_rows = generate_future_forecast(df, lgbm_models, dlinear_result, avail, weekly_avg, ensemble_w_lgbm=w_lgbm, ensemble_w_dl=w_dl)
-    print(f"    Generated {len(forecast_rows)} days")
     test_df = df.iloc[-TEST_DAYS:]
     y_te = test_df['price_per_kg'].values; y_naive = test_df['lag7'].values
     mask = y_te > 0
@@ -598,6 +606,15 @@ def run_crop(crop_df, crop_name, weather_df=None):
     best_individual = min(all_mapes)
     ens_val = stacking_results.get(7, best_individual)
     ensemble_d7 = min(ens_val, best_individual)
+    # MAPE-based confidence interval: use ensemble MAPE for hi/lo
+    ci_mape = ensemble_d7
+    print(f"\n  [CI] Using MAPE-based confidence interval: ±{ci_mape:.1f}%")
+    daily_bt = daily_backtest_lgbm(df, lgbm_models, avail, backtest_mape=ci_mape)
+    print("\n  [Future Forecast]")
+    forecast_rows = generate_future_forecast(df, lgbm_models, dlinear_result, avail, weekly_avg,
+                                             ensemble_w_lgbm=w_lgbm, ensemble_w_dl=w_dl,
+                                             backtest_mape=ci_mape)
+    print(f"    Generated {len(forecast_rows)} days")
     stats = {
         'mape_d7': bt_results.get(7,{}).get('mape',99.9),
         'mape_d14': bt_results.get(14,{}).get('mape',99.9),
@@ -614,7 +631,8 @@ def run_crop(crop_df, crop_name, weather_df=None):
         'rmse': round(bt_results.get(min(bt_results.keys()),{}).get('rmse',0),1),
         'beat_naive': ensemble_d7 < mape_naive,
         'test_days': TEST_DAYS, 'model': 'Stacking(LGB+CB+DL+NHiTS)',
-        'horizons': list(lgbm_models.keys()), 'quantile_ci': True, 'weather_features': n_wx > 0,
+        'horizons': list(lgbm_models.keys()), 'ci_method': 'mape', 'ci_mape': round(ci_mape, 2),
+        'weather_features': n_wx > 0,
     }
     print(f"\n  Summary: Stack={ensemble_d7:.1f}% LGB={mape_lgbm:.1f}% Naive={mape_naive:.1f}% {'BEAT' if stats['beat_naive'] else 'LOSE'}")
     return daily_bt, forecast_rows, stats
