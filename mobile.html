@@ -583,7 +583,9 @@ function renderPeriods() {
 
 function setView(v) {
   state.view = v;
+  if (state.period === 'compare' && v === 'overview') state.period = 30;
   renderTabs();
+  renderPeriods();
   render();
 }
 
