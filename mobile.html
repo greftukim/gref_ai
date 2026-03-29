@@ -190,6 +190,15 @@ body {
 .chart-forecast-badge.dn { background: rgba(37,99,235,0.1); color: var(--accent); }
 .chart-forecast-badge.flat { background: rgba(148,163,184,0.1); color: var(--muted); }
 .chart-wrap canvas { width:100% !important; }
+.chart-title-row {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:8px;
+}
+.nongnet-link {
+  font-size:11px; font-weight:500; color:var(--green);
+  text-decoration:none; white-space:nowrap;
+}
+.nongnet-link:hover { text-decoration:underline; }
 
 /* Forecast Card */
 .forecast-section {
@@ -406,10 +415,10 @@ body {
 <script>
 // ── Config ──
 const PRODUCTS = {
-  tomato:     { name:'토마토(완숙)', emoji:'🍅', unit:'원/kg', color:'#FF5C5C', bg:'rgba(255,92,92,' },
-  cucumber:   { name:'오이(백다다기)', emoji:'🥒', unit:'원/kg', color:'#22C55E', bg:'rgba(34,197,94,' },
-  paprika:    { name:'파프리카(미니)', emoji:'🌶️', unit:'원/kg', color:'#FF8C00', bg:'rgba(255,140,0,' },
-  strawberry: { name:'딸기(설향)', emoji:'🍓', unit:'원/kg', color:'#FF69B4', bg:'rgba(255,105,180,' }
+  tomato:     { name:'토마토(완숙)', emoji:'🍅', unit:'원/kg', color:'#FF5C5C', bg:'rgba(255,92,92,', nongnet:'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=080303' },
+  cucumber:   { name:'오이(백다다기)', emoji:'🥒', unit:'원/kg', color:'#22C55E', bg:'rgba(34,197,94,', nongnet:'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=0901' },
+  paprika:    { name:'파프리카(미니)', emoji:'🌶️', unit:'원/kg', color:'#FF8C00', bg:'rgba(255,140,0,', nongnet:'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=132606' },
+  strawberry: { name:'딸기(설향)', emoji:'🍓', unit:'원/kg', color:'#FF69B4', bg:'rgba(255,105,180,', nongnet:'https://www.nongnet.or.kr/front/M000000006/stats/totSearch2.do?keyword=080413' }
 };
 const CROP_IDS = Object.keys(PRODUCTS);
 const OFF_SEASON = { strawberry: [7, 8] };
@@ -634,12 +643,14 @@ function renderDetail(id) {
   // Chart
   if (state.period === 'compare') {
     html += '<div class="chart-section"><div class="chart-box">' +
-      '<div class="chart-title"><span class="color-dot" style="background:' + p.color + '"></span>올해 vs 작년 가격 비교</div>' +
+      '<div class="chart-title-row"><div class="chart-title" style="margin-bottom:0"><span class="color-dot" style="background:' + p.color + '"></span>올해 vs 작년 가격 비교</div>' +
+      '<a class="nongnet-link" href="' + p.nongnet + '" target="_blank" rel="noopener">농넷 바로가기 &rarr;</a></div>' +
       '<div class="chart-wrap" style="height:280px"><canvas id="compare-chart"></canvas></div>' +
       '</div></div>';
   } else {
     html += '<div class="chart-section"><div class="chart-box">' +
-      '<div class="chart-title"><span class="color-dot" style="background:' + p.color + '"></span>가격 추이 & AI 예측</div>' +
+      '<div class="chart-title-row"><div class="chart-title" style="margin-bottom:0"><span class="color-dot" style="background:' + p.color + '"></span>가격 추이 & AI 예측</div>' +
+      '<a class="nongnet-link" href="' + p.nongnet + '" target="_blank" rel="noopener">농넷 바로가기 &rarr;</a></div>' +
       '<div class="chart-wrap" style="height:260px"><canvas id="detail-chart"></canvas></div>' +
       '</div></div>';
   }
