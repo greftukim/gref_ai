@@ -176,19 +176,41 @@ body {
   position: relative;
   height: 220px;
 }
-.chart-forecast-badge {
-  position: absolute;
-  top: 4px; right: 4px;
+/* Overview forecast badge + collapsible */
+.ov-badge-row {
+  display:flex; align-items:center; gap:4px;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+.ov-badge {
   padding: 3px 8px;
   border-radius: 8px;
   font-size: 11px;
   font-weight: 700;
-  z-index: 10;
-  pointer-events: none;
+  white-space: nowrap;
 }
-.chart-forecast-badge.up { background: rgba(225,29,72,0.1); color: var(--red); }
-.chart-forecast-badge.dn { background: rgba(37,99,235,0.1); color: var(--accent); }
-.chart-forecast-badge.flat { background: rgba(148,163,184,0.1); color: var(--muted); }
+.ov-badge.up { background: rgba(225,29,72,0.1); color: var(--red); }
+.ov-badge.dn { background: rgba(37,99,235,0.1); color: var(--accent); }
+.ov-badge.flat { background: rgba(148,163,184,0.1); color: var(--muted); }
+.ov-badge-arrow {
+  font-size: 10px; color: var(--muted);
+  transition: transform 0.2s;
+}
+.ov-badge-arrow.open { transform: rotate(180deg); }
+.ov-comment-box {
+  display: none;
+  margin-top: 10px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 10px;
+  width: 100%;
+}
+.ov-comment-box.open { display: block; }
+.ov-comment-header {
+  font-size: 14px; font-weight: 700; margin-bottom: 6px;
+}
+.ov-comment-note {
+  font-size: 11px; color: var(--muted); margin-bottom: 10px;
+}
 .chart-wrap canvas { width:100% !important; }
 .chart-title-row {
   display:flex; justify-content:space-between; align-items:center;
@@ -450,6 +472,13 @@ function pct(v) { return (v > 0 ? '+' : '') + v.toFixed(1) + '%'; }
 function deltaArrow(v) { return v > 0.05 ? '▲' : v < -0.05 ? '▼' : '−'; }
 function deltaCls(v) { return v > 0.05 ? 'up' : v < -0.05 ? 'dn' : 'flat'; }
 
+function toggleOvComment(id) {
+  var box = document.getElementById(id);
+  var arrow = document.getElementById('arrow-' + id);
+  if (box) { box.classList.toggle('open'); }
+  if (arrow) { arrow.classList.toggle('open'); }
+}
+
 function showToast(msg) {
   var t = document.getElementById('toast');
   t.textContent = msg;
@@ -584,29 +613,52 @@ function renderOverview() {
   html += '</div>';
 
   // Mini charts for each crop
-  CROP_IDS.forEach(function(id) {
+  CROP_IDS.forEach(function(id, ci) {
     var p = PRODUCTS[id];
     var data = getFiltered(id);
     var fore = getForecast(id);
     if (!data.length) return;
-    // Calculate forecast trend for badge
-    var badgeHtml = '';
-    if (fore.length >= 7) {
-      var s2 = calcStats(data);
+    var s2 = calcStats(data);
+    // Forecast badge + collapsible comment
+    var badgeHtml = '', commentId = 'ov-comment-' + id;
+    if (fore.length >= 7 && s2) {
+      var weeks = weeklyBins(fore, s2.last);
       var weekAvg = 0;
       for (var bi = 0; bi < Math.min(14, fore.length); bi++) weekAvg += fore[bi].price;
       weekAvg /= Math.min(14, fore.length);
-      var fChg = s2 ? (weekAvg - s2.last) / s2.last * 100 : 0;
+      var fChg = (weekAvg - s2.last) / s2.last * 100;
       var fCls = deltaCls(fChg);
       var fArrow = fChg > 0.5 ? '↑' : fChg < -0.5 ? '↓' : '→';
-      var fLabel = fChg > 0.5 ? '상승 전망' : fChg < -0.5 ? '하락 전망' : '보합 전망';
-      badgeHtml = '<div class="chart-forecast-badge ' + fCls + '">' + fArrow + ' ' + fLabel + ' (' + pct(fChg) + ')</div>';
+      var fLabel = fChg > 0.5 ? '상승 구간 예측' : fChg < -0.5 ? '하락 구간 예측' : '보합 구간 예측';
+      badgeHtml = '<div class="ov-badge-row" onclick="toggleOvComment(\'' + commentId + '\')">' +
+        '<div class="ov-badge ' + fCls + '">' + fArrow + ' ' + fLabel + '</div>' +
+        '<span class="ov-badge-arrow" id="arrow-' + commentId + '">&#9660;</span></div>';
+      // Build collapsible content
+      badgeHtml += '<div class="ov-comment-box" id="' + commentId + '">';
+      if (weeks.length > 0) {
+        // Find trigger week
+        var triggerW = 1;
+        for (var tw = 0; tw < weeks.length; tw++) {
+          if ((fChg > 0 && weeks[tw].changePct > 2) || (fChg < 0 && weeks[tw].changePct < -2)) { triggerW = tw + 1; break; }
+        }
+        var dirWord = fChg > 0.5 ? '상승' : fChg < -0.5 ? '하락' : '보합';
+        badgeHtml += '<div class="ov-comment-header">' + triggerW + '주 후 단가 ' + dirWord + ' 구간 시작 예정</div>';
+        badgeHtml += '<div class="ov-comment-note">※ 변동률은 업데이트 기준일 AI 예측가 기준입니다.</div>';
+        weeks.forEach(function(w) {
+          var wCls = w.changePct >= 0 ? 'up' : 'dn';
+          badgeHtml += '<div class="fc-week-row"><span class="fc-week-label"><b>' + w.week + '주</b> (' +
+            fmtRange(w.startDate) + '~' + fmtRange(w.endDate) + ')</span>' +
+            '<span class="fc-week-value ' + wCls + '"><b>' + pct(w.changePct) + '</b> / 약 ' + fmt(w.avg) + '원/kg</span></div>';
+        });
+      }
+      badgeHtml += '</div>';
     }
     html += '<div class="chart-section">' +
       '<div class="chart-box">' +
-      '<div class="chart-title"><span class="color-dot" style="background:' + p.color + '"></span>' +
-      p.emoji + ' ' + p.name + '</div>' +
-      '<div class="chart-wrap">' + badgeHtml + '<canvas id="chart-' + id + '"></canvas></div>' +
+      '<div class="chart-title-row" style="align-items:flex-start">' +
+      '<div class="chart-title" style="margin-bottom:0"><span class="color-dot" style="background:' + p.color + '"></span>' +
+      p.emoji + ' ' + p.name + '</div>' + badgeHtml + '</div>' +
+      '<div class="chart-wrap"><canvas id="chart-' + id + '"></canvas></div>' +
       '</div></div>';
   });
 
