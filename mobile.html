@@ -404,7 +404,8 @@ const PERIODS = [
   { label:'7일', days:7 },
   { label:'30일', days:30 },
   { label:'90일', days:90 },
-  { label:'180일', days:180 }
+  { label:'180일', days:180 },
+  { label:'과거 비교', days:'compare' }
 ];
 
 // ── State ──
@@ -451,7 +452,8 @@ function calcStats(arr) {
 function getFiltered(id) {
   var hist = state.data[id];
   if (!hist || !hist.length) return [];
-  return hist.slice(-state.period);
+  var days = typeof state.period === 'number' ? state.period : 180;
+  return hist.slice(-days);
 }
 
 function getForecast(id) {
@@ -502,8 +504,10 @@ function renderTabs() {
 function renderPeriods() {
   var html = '';
   PERIODS.forEach(function(p) {
-    html += '<button class="period-btn ' + (state.period === p.days ? 'active' : '') +
-      '" onclick="setPeriod(' + p.days + ')">' + p.label + '</button>';
+    var isActive = state.period === p.days;
+    var arg = typeof p.days === 'string' ? "'" + p.days + "'" : p.days;
+    html += '<button class="period-btn ' + (isActive ? 'active' : '') +
+      '" onclick="setPeriod(' + arg + ')">' + p.label + '</button>';
   });
   document.getElementById('period-bar').innerHTML = html;
 }
@@ -518,6 +522,12 @@ function setPeriod(d) {
   state.period = d;
   renderPeriods();
   render();
+}
+
+function getFilteredDays(id, days) {
+  var hist = state.data[id];
+  if (!hist || !hist.length) return [];
+  return hist.slice(-days);
 }
 
 // ── Render ──
@@ -569,7 +579,7 @@ function renderOverview() {
   // Draw mini charts
   CROP_IDS.forEach(function(id) {
     var el = document.getElementById('chart-' + id);
-    if (el) drawChart(el, id, false);
+    if (el) drawChart(el, id, true);
   });
 }
 
@@ -594,13 +604,20 @@ function renderDetail(id) {
     '</div></div>';
 
   // Chart
-  html += '<div class="chart-section"><div class="chart-box">' +
-    '<div class="chart-title"><span class="color-dot" style="background:' + p.color + '"></span>가격 추이 & AI 예측</div>' +
-    '<div class="chart-wrap" style="height:260px"><canvas id="detail-chart"></canvas></div>' +
-    '</div></div>';
+  if (state.period === 'compare') {
+    html += '<div class="chart-section"><div class="chart-box">' +
+      '<div class="chart-title"><span class="color-dot" style="background:' + p.color + '"></span>올해 vs 작년 가격 비교</div>' +
+      '<div class="chart-wrap" style="height:280px"><canvas id="compare-chart"></canvas></div>' +
+      '</div></div>';
+  } else {
+    html += '<div class="chart-section"><div class="chart-box">' +
+      '<div class="chart-title"><span class="color-dot" style="background:' + p.color + '"></span>가격 추이 & AI 예측</div>' +
+      '<div class="chart-wrap" style="height:260px"><canvas id="detail-chart"></canvas></div>' +
+      '</div></div>';
+  }
 
-  // Forecast summary
-  if (fore.length > 0) {
+  // Forecast summary (hide in compare mode)
+  if (fore.length > 0 && state.period !== 'compare') {
     var weeks = weeklyBins(fore, s.last);
     html += '<div class="forecast-section"><div class="fc-card">' +
       '<div class="fc-title">AI 예측 요약 (180일)</div>';
@@ -687,15 +704,22 @@ function renderDetail(id) {
   html += '<div class="footer">GREF · 농산물 가격예측 AI 대시보드<br>데이터: 농넷 · 매일 자동 갱신</div>';
   document.getElementById('app').innerHTML = html;
 
-  var el = document.getElementById('detail-chart');
-  if (el) drawChart(el, id, true);
+  if (state.period === 'compare') {
+    var cel = document.getElementById('compare-chart');
+    if (cel) drawCompareChart(cel, id);
+  } else {
+    var el = document.getElementById('detail-chart');
+    if (el) drawChart(el, id, true);
+  }
 }
 
 // ── Chart Drawing ──
 function drawChart(canvas, cropId, showForecast) {
   var p = PRODUCTS[cropId];
   var data = getFiltered(cropId);
-  var fore = showForecast !== false ? getForecast(cropId) : getForecast(cropId).slice(0, Math.min(state.period, 30));
+  var allFore = getForecast(cropId);
+  // Forecast period matches historical period
+  var fore = showForecast !== false ? allFore.slice(0, state.period) : allFore.slice(0, Math.min(state.period, 30));
   if (!data.length) return;
 
   var labels = data.map(function(d) { return d.date; });
@@ -709,12 +733,20 @@ function drawChart(canvas, cropId, showForecast) {
   var histData = prices.concat(new Array(foreLabels.length).fill(null));
   var foreData = new Array(labels.length).fill(null);
   // Connect forecast to last historical point
-  if (prices.length > 0 && forePrices.length > 0) {
-    foreData[foreData.length - 1] = prices[prices.length - 1];
+  var lastPrice = prices.length > 0 ? prices[prices.length - 1] : null;
+  if (lastPrice !== null && forePrices.length > 0) {
+    foreData[foreData.length - 1] = lastPrice;
   }
   foreData = foreData.concat(forePrices);
-  var hiData = new Array(labels.length).fill(null).concat(foreHi);
-  var loData = new Array(labels.length).fill(null).concat(foreLo);
+  // Connect hi/lo to last price so band starts from baseline
+  var hiData = new Array(labels.length).fill(null);
+  var loData = new Array(labels.length).fill(null);
+  if (lastPrice !== null && foreHi.length > 0) {
+    hiData[hiData.length - 1] = lastPrice;
+    loData[loData.length - 1] = lastPrice;
+  }
+  hiData = hiData.concat(foreHi);
+  loData = loData.concat(foreLo);
 
   var datasets = [
     {
@@ -856,6 +888,109 @@ function drawChart(canvas, cropId, showForecast) {
     '<div class="chart-legend-item"><div class="legend-line dashed" style="color:' + p.color + '"></div>AI 예측</div>' +
     '<div class="chart-legend-item"><div class="legend-band" style="background:' + p.color + '"></div>신뢰구간</div>' +
     '<div class="chart-legend-item"><div class="legend-today"></div>기준일</div>';
+}
+
+// ── Compare Chart (올해 vs 작년) ──
+function drawCompareChart(canvas, cropId) {
+  var p = PRODUCTS[cropId];
+  var allHist = state.data[cropId];
+  if (!allHist || allHist.length < 365) return;
+
+  // Split into this year (last 180 days) and last year (same calendar period, 1yr ago)
+  var now = new Date(allHist[allHist.length - 1].date);
+  var thisYearData = [], lastYearData = [];
+  var dayLabels = []; // MM/DD labels
+
+  // Get last 180 days for "this year"
+  var thisStart = new Date(now);
+  thisStart.setDate(thisStart.getDate() - 179);
+
+  // Build date map for quick lookup
+  var dateMap = {};
+  allHist.forEach(function(d) { dateMap[d.date] = d.price; });
+
+  for (var i = 0; i < 180; i++) {
+    var d = new Date(thisStart);
+    d.setDate(d.getDate() + i);
+    var dStr = d.toISOString().split('T')[0];
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    dayLabels.push(mm + '/' + dd);
+    thisYearData.push(dateMap[dStr] || null);
+
+    // Same calendar day, 1 year ago
+    var ly = new Date(d);
+    ly.setFullYear(ly.getFullYear() - 1);
+    var lyStr = ly.toISOString().split('T')[0];
+    lastYearData.push(dateMap[lyStr] || null);
+  }
+
+  var thisYear = now.getFullYear();
+  var lastYear = thisYear - 1;
+
+  new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: dayLabels,
+      datasets: [
+        {
+          label: thisYear + '년 (올해)',
+          data: thisYearData,
+          borderColor: p.color,
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          tension: 0.3
+        },
+        {
+          label: lastYear + '년 (작년)',
+          data: lastYearData,
+          borderColor: '#94A3B8',
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderDash: [5, 3],
+          pointRadius: 0,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { font: { size: 11 }, boxWidth: 20, padding: 12 }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(30,41,59,0.92)',
+          titleFont: { size: 11 },
+          bodyFont: { size: 12 },
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.raw === null) return null;
+              return ctx.dataset.label + ': ' + Math.round(ctx.raw).toLocaleString() + '원';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { maxTicksLimit: 6, font: { size: 10 } }
+        },
+        y: {
+          grid: { color: 'rgba(0,0,0,0.04)' },
+          ticks: { font: { size: 10 }, callback: function(v) { return v.toLocaleString(); } }
+        }
+      }
+    }
+  });
 }
 
 // ── Weekly Bins ──
