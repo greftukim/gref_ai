@@ -176,6 +176,19 @@ body {
   position: relative;
   height: 220px;
 }
+.chart-forecast-badge {
+  position: absolute;
+  top: 4px; right: 4px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  z-index: 10;
+  pointer-events: none;
+}
+.chart-forecast-badge.up { background: rgba(225,29,72,0.1); color: var(--red); }
+.chart-forecast-badge.dn { background: rgba(37,99,235,0.1); color: var(--accent); }
+.chart-forecast-badge.flat { background: rgba(148,163,184,0.1); color: var(--muted); }
 .chart-wrap canvas { width:100% !important; }
 
 /* Forecast Card */
@@ -394,7 +407,7 @@ body {
 // ── Config ──
 const PRODUCTS = {
   tomato:     { name:'토마토(완숙)', emoji:'🍅', unit:'원/kg', color:'#FF5C5C', bg:'rgba(255,92,92,' },
-  cucumber:   { name:'오이(백다다기)', emoji:'🥒', unit:'원/kg', color:'#2EFF8B', bg:'rgba(46,255,139,' },
+  cucumber:   { name:'오이(백다다기)', emoji:'🥒', unit:'원/kg', color:'#22C55E', bg:'rgba(34,197,94,' },
   paprika:    { name:'파프리카(미니)', emoji:'🌶️', unit:'원/kg', color:'#FF8C00', bg:'rgba(255,140,0,' },
   strawberry: { name:'딸기(설향)', emoji:'🍓', unit:'원/kg', color:'#FF69B4', bg:'rgba(255,105,180,' }
 };
@@ -503,7 +516,9 @@ function renderTabs() {
 
 function renderPeriods() {
   var html = '';
+  var showCompare = state.view !== 'overview';
   PERIODS.forEach(function(p) {
+    if (p.days === 'compare' && !showCompare) return;
     var isActive = state.period === p.days;
     var arg = typeof p.days === 'string' ? "'" + p.days + "'" : p.days;
     html += '<button class="period-btn ' + (isActive ? 'active' : '') +
@@ -565,11 +580,24 @@ function renderOverview() {
     var data = getFiltered(id);
     var fore = getForecast(id);
     if (!data.length) return;
+    // Calculate forecast trend for badge
+    var badgeHtml = '';
+    if (fore.length >= 7) {
+      var s2 = calcStats(data);
+      var weekAvg = 0;
+      for (var bi = 0; bi < Math.min(14, fore.length); bi++) weekAvg += fore[bi].price;
+      weekAvg /= Math.min(14, fore.length);
+      var fChg = s2 ? (weekAvg - s2.last) / s2.last * 100 : 0;
+      var fCls = deltaCls(fChg);
+      var fArrow = fChg > 0.5 ? '↑' : fChg < -0.5 ? '↓' : '→';
+      var fLabel = fChg > 0.5 ? '상승 전망' : fChg < -0.5 ? '하락 전망' : '보합 전망';
+      badgeHtml = '<div class="chart-forecast-badge ' + fCls + '">' + fArrow + ' ' + fLabel + ' (' + pct(fChg) + ')</div>';
+    }
     html += '<div class="chart-section">' +
       '<div class="chart-box">' +
       '<div class="chart-title"><span class="color-dot" style="background:' + p.color + '"></span>' +
       p.emoji + ' ' + p.name + '</div>' +
-      '<div class="chart-wrap"><canvas id="chart-' + id + '"></canvas></div>' +
+      '<div class="chart-wrap">' + badgeHtml + '<canvas id="chart-' + id + '"></canvas></div>' +
       '</div></div>';
   });
 
@@ -815,7 +843,7 @@ function drawChart(canvas, cropId, showForecast) {
       borderDash: [4, 3],
       label: {
         display: true,
-        content: '기준일',
+        content: state.lastUpdated ? state.lastUpdated.split(' ')[0] : '기준일',
         position: 'start',
         backgroundColor: 'rgba(225,29,72,0.8)',
         color: '#fff',
@@ -924,6 +952,28 @@ function drawCompareChart(canvas, cropId) {
     var lyStr = ly.toISOString().split('T')[0];
     lastYearData.push(dateMap[lyStr] || null);
   }
+
+  // Fill gaps (non-trading days) with linear interpolation
+  function fillGaps(arr) {
+    var result = arr.slice();
+    for (var i = 0; i < result.length; i++) {
+      if (result[i] === null) {
+        var prev = null, next = null, pi = -1, ni = -1;
+        for (var j = i - 1; j >= 0; j--) { if (result[j] !== null) { prev = result[j]; pi = j; break; } }
+        for (var j = i + 1; j < result.length; j++) { if (result[j] !== null) { next = result[j]; ni = j; break; } }
+        if (prev !== null && next !== null) {
+          result[i] = Math.round(prev + (next - prev) * (i - pi) / (ni - pi));
+        } else if (prev !== null) {
+          result[i] = prev;
+        } else if (next !== null) {
+          result[i] = next;
+        }
+      }
+    }
+    return result;
+  }
+  thisYearData = fillGaps(thisYearData);
+  lastYearData = fillGaps(lastYearData);
 
   var thisYear = now.getFullYear();
   var lastYear = thisYear - 1;
