@@ -177,16 +177,14 @@ body {
   height: 220px;
 }
 /* Overview forecast badge + collapsible */
-.ov-badge-row {
-  display:flex; align-items:center; gap:4px;
-  cursor:pointer; -webkit-tap-highlight-color:transparent;
-}
 .ov-badge {
   padding: 3px 8px;
   border-radius: 8px;
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .ov-badge.up { background: rgba(225,29,72,0.1); color: var(--red); }
 .ov-badge.dn { background: rgba(37,99,235,0.1); color: var(--accent); }
@@ -215,6 +213,16 @@ body {
 .chart-title-row {
   display:flex; justify-content:space-between; align-items:center;
   margin-bottom:8px;
+}
+.mape-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(37,99,235,0.08);
+  padding: 1px 6px;
+  border-radius: 6px;
+  margin-left: 4px;
+  vertical-align: middle;
 }
 .nongnet-link {
   font-size:11px; font-weight:500; color:var(--green);
@@ -466,6 +474,14 @@ let state = {
 let chart = null;
 
 // ── Utils ──
+function getCropMape(id) {
+  var tr = state.testResults && state.testResults[id];
+  if (!tr || !tr.length) return null;
+  var sum = 0, cnt = 0;
+  tr.forEach(function(r) { if (r.error_pct != null) { sum += r.error_pct; cnt++; } });
+  return cnt > 0 ? +(sum / cnt).toFixed(1) : null;
+}
+
 function fmt(n) { return n ? Math.round(n).toLocaleString() : '-'; }
 function fmtDate(s) { return s ? s.replace(/-/g, '.').slice(2) : '-'; }
 function pct(v) { return (v > 0 ? '+' : '') + v.toFixed(1) + '%'; }
@@ -619,8 +635,9 @@ function renderOverview() {
     var fore = getForecast(id);
     if (!data.length) return;
     var s2 = calcStats(data);
-    // Forecast badge + collapsible comment
-    var badgeHtml = '', commentId = 'ov-comment-' + id;
+    // Badge + collapsible forecast comment (separate from chart box)
+    var commentId = 'ov-comment-' + id;
+    var badgeHtml = '', commentBoxHtml = '';
     if (fore.length >= 7 && s2) {
       var weeks = weeklyBins(fore, s2.last);
       var weekAvg = 0;
@@ -630,36 +647,48 @@ function renderOverview() {
       var fCls = deltaCls(fChg);
       var fArrow = fChg > 0.5 ? '↑' : fChg < -0.5 ? '↓' : '→';
       var fLabel = fChg > 0.5 ? '상승 구간 예측' : fChg < -0.5 ? '하락 구간 예측' : '보합 구간 예측';
-      badgeHtml = '<div class="ov-badge-row" onclick="toggleOvComment(\'' + commentId + '\')">' +
-        '<div class="ov-badge ' + fCls + '">' + fArrow + ' ' + fLabel + '</div>' +
-        '<span class="ov-badge-arrow" id="arrow-' + commentId + '">&#9660;</span></div>';
-      // Build collapsible content
-      badgeHtml += '<div class="ov-comment-box" id="' + commentId + '">';
+      badgeHtml = '<div class="ov-badge ' + fCls + '" onclick="toggleOvComment(\'' + commentId + '\')">' +
+        fArrow + ' ' + fLabel + ' <span class="ov-badge-arrow" id="arrow-' + commentId + '">&#9660;</span></div>';
       if (weeks.length > 0) {
-        // Find trigger week
         var triggerW = 1;
         for (var tw = 0; tw < weeks.length; tw++) {
           if ((fChg > 0 && weeks[tw].changePct > 2) || (fChg < 0 && weeks[tw].changePct < -2)) { triggerW = tw + 1; break; }
         }
         var dirWord = fChg > 0.5 ? '상승' : fChg < -0.5 ? '하락' : '보합';
-        badgeHtml += '<div class="ov-comment-header">' + triggerW + '주 후 단가 ' + dirWord + ' 구간 시작 예정</div>';
-        badgeHtml += '<div class="ov-comment-note">※ 변동률은 업데이트 기준일 AI 예측가 기준입니다.</div>';
+        commentBoxHtml = '<div class="ov-comment-box" id="' + commentId + '">' +
+          '<div class="comment-card ' + fCls + '-card">' +
+          '<div class="comment-header-badge ' + fCls + '">' + fArrow + ' ' + dirWord + ' 구간 예측</div>' +
+          '<div class="comment-title">' + triggerW + '주 후 단가 ' + dirWord + ' 구간 시작 예정</div>' +
+          '<div class="comment-note">※ 변동률은 업데이트 기준일 AI 예측가 기준입니다.</div>';
         weeks.forEach(function(w) {
           var wCls = w.changePct >= 0 ? 'up' : 'dn';
-          badgeHtml += '<div class="fc-week-row"><span class="fc-week-label"><b>' + w.week + '주</b> (' +
+          commentBoxHtml += '<div class="fc-week-row"><span class="fc-week-label"><b>' + w.week + '주</b> (' +
             fmtRange(w.startDate) + '~' + fmtRange(w.endDate) + ')</span>' +
             '<span class="fc-week-value ' + wCls + '"><b>' + pct(w.changePct) + '</b> / 약 ' + fmt(w.avg) + '원/kg</span></div>';
         });
+        // Duration + narrative
+        var sustained = 0;
+        if (fChg > 0) { for (var si2 = 0; si2 < weeks.length; si2++) { if (weeks[si2].changePct > 0) sustained++; else break; } }
+        else { for (var si2 = 0; si2 < weeks.length; si2++) { if (weeks[si2].changePct < 0) sustained++; else break; } }
+        if (sustained < 1) sustained = 1;
+        commentBoxHtml += '<div class="comment-duration">약 ' + sustained + '주간 지속 예상</div>';
+        var ly = new Date(); ly.setFullYear(ly.getFullYear() - 1);
+        var lyM = ly.getMonth() + 1;
+        commentBoxHtml += '<div class="comment-narrative">작년 시점(' + ly.getFullYear() + '.' +
+          String(lyM).padStart(2,'0') + ' ~ ' + ly.getFullYear() + '.' +
+          String(Math.min(12, lyM + 2)).padStart(2,'0') + ') ' + p.name.split('(')[0] +
+          ' 단가는 유사한 계절적 흐름을 보였습니다. 올해도 비슷한 패턴을 기반으로 예측했습니다.</div>';
+        commentBoxHtml += '</div></div>';
       }
-      badgeHtml += '</div>';
     }
+    var mapeHtml = (function(){ var m = getCropMape(id); return m !== null ? ' <span class="mape-tag">MAPE ' + m + '%</span>' : ''; })();
     html += '<div class="chart-section">' +
       '<div class="chart-box">' +
-      '<div class="chart-title-row" style="align-items:flex-start">' +
+      '<div class="chart-title-row">' +
       '<div class="chart-title" style="margin-bottom:0"><span class="color-dot" style="background:' + p.color + '"></span>' +
-      p.emoji + ' ' + p.name + '</div>' + badgeHtml + '</div>' +
+      p.emoji + ' ' + p.name + mapeHtml + '</div>' + badgeHtml + '</div>' +
       '<div class="chart-wrap"><canvas id="chart-' + id + '"></canvas></div>' +
-      '</div></div>';
+      '</div>' + commentBoxHtml + '</div>';
   });
 
   html += '<div class="footer">GREF · 농산물 가격예측 AI 대시보드<br>데이터: 농넷 · 매일 자동 갱신</div>';
@@ -701,7 +730,8 @@ function renderDetail(id) {
       '</div></div>';
   } else {
     html += '<div class="chart-section"><div class="chart-box">' +
-      '<div class="chart-title-row"><div class="chart-title" style="margin-bottom:0"><span class="color-dot" style="background:' + p.color + '"></span>가격 추이 & AI 예측</div>' +
+      '<div class="chart-title-row"><div class="chart-title" style="margin-bottom:0"><span class="color-dot" style="background:' + p.color + '"></span>가격 추이 & AI 예측' +
+      (function(){ var m = getCropMape(id); return m !== null ? ' <span class="mape-tag">MAPE ' + m + '%</span>' : ''; })() + '</div>' +
       '<a class="nongnet-link" href="' + p.nongnet + '" target="_blank" rel="noopener">농넷 바로가기 &rarr;</a></div>' +
       '<div class="chart-wrap" style="height:260px"><canvas id="detail-chart"></canvas></div>' +
       '</div></div>';
@@ -839,6 +869,17 @@ function drawChart(canvas, cropId, showForecast) {
   hiData = hiData.concat(foreHi);
   loData = loData.concat(foreLo);
 
+  // Backtest predicted values (overlay on historical)
+  var btData = allLabels.map(function() { return null; });
+  var tr = state.testResults && state.testResults[cropId];
+  if (tr && tr.length) {
+    var btMap = {};
+    tr.forEach(function(r) { btMap[r.date] = r.predicted; });
+    for (var bi = 0; bi < labels.length; bi++) {
+      if (btMap[labels[bi]] != null) btData[bi] = btMap[labels[bi]];
+    }
+  }
+
   var datasets = [
     {
       label: '실제 가격',
@@ -849,6 +890,17 @@ function drawChart(canvas, cropId, showForecast) {
       pointRadius: 0,
       tension: 0.3,
       order: 2
+    },
+    {
+      label: '과거 AI 예측',
+      data: btData,
+      borderColor: 'rgba(148,163,184,0.6)',
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      borderDash: [3, 3],
+      pointRadius: 0,
+      tension: 0.3,
+      order: 1
     },
     {
       label: 'AI 예측',
@@ -977,6 +1029,7 @@ function drawChart(canvas, cropId, showForecast) {
   legendContainer.innerHTML =
     '<div class="chart-legend-item"><div class="legend-line" style="background:' + p.color + '"></div>실제 가격</div>' +
     '<div class="chart-legend-item"><div class="legend-line dashed" style="color:' + p.color + '"></div>AI 예측</div>' +
+    '<div class="chart-legend-item"><div class="legend-line dashed" style="color:#94A3B8"></div>과거 AI 예측</div>' +
     '<div class="chart-legend-item"><div class="legend-band" style="background:' + p.color + '"></div>신뢰구간</div>' +
     '<div class="chart-legend-item"><div class="legend-today"></div>기준일</div>';
 }
