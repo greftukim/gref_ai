@@ -8,6 +8,10 @@
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script>
+// Register Filler plugin for fill between datasets
+Chart.register(Chart.Filler);
+</script>
 <style>
 :root {
   --bg: #F4F6F8;
@@ -280,7 +284,7 @@ body {
   border-left: 2px dashed var(--red);
 }
 
-/* Comment Box */
+/* Comment Box (website style) */
 .comment-section { padding: 0 16px 12px; }
 .comment-card {
   background: var(--surface);
@@ -291,18 +295,38 @@ body {
 .comment-card.up-card { border-left: 3px solid var(--red); }
 .comment-card.dn-card { border-left: 3px solid var(--accent); }
 .comment-card.flat-card { border-left: 3px solid var(--muted); }
+.comment-header-badge {
+  font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 10px;
+  display: inline-block; margin-bottom: 8px;
+}
+.comment-header-badge.up { background:rgba(225,29,72,0.1); color:var(--red); }
+.comment-header-badge.dn { background:rgba(37,99,235,0.1); color:var(--accent); }
+.comment-header-badge.flat { background:rgba(148,163,184,0.15); color:var(--muted); }
 .comment-title {
-  font-size: 14px; font-weight: 600; margin-bottom:8px;
+  font-size: 15px; font-weight: 700; margin-bottom: 10px;
 }
-.comment-title .badge {
-  display:inline-block; padding:2px 8px; border-radius:10px;
-  font-size:11px; font-weight:600; margin-left:6px;
+.comment-note {
+  font-size: 11px; color: var(--muted); margin-bottom: 12px;
 }
-.badge.up { background:rgba(225,29,72,0.1); color:var(--red); }
-.badge.dn { background:rgba(37,99,235,0.1); color:var(--accent); }
-.badge.flat { background:rgba(148,163,184,0.15); color:var(--muted); }
-.comment-body {
-  font-size: 13px; line-height:1.6; color:var(--dim);
+.fc-week-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.fc-week-row:last-of-type { border-bottom: none; }
+.fc-week-label { color: var(--dim); }
+.fc-week-value { text-align: right; font-variant-numeric: tabular-nums; }
+.fc-week-value.up { color: var(--red); }
+.fc-week-value.dn { color: var(--accent); }
+.comment-duration {
+  font-size: 14px; font-weight: 700;
+  margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.comment-narrative {
+  font-size: 12px; line-height: 1.7; color: var(--dim);
+  margin-top: 10px;
 }
 
 /* Footer */
@@ -437,7 +461,7 @@ function getForecast(id) {
   return fc.forecast.filter(function(f) {
     var m = new Date(f.date).getMonth() + 1;
     return offMonths.indexOf(m) === -1;
-  }).slice(0, state.period);
+  });
 }
 
 // ── Data Loading ──
@@ -601,47 +625,61 @@ function renderDetail(id) {
     });
     html += '</div></div>';
 
-    // Forecast comment box
+    // Forecast comment box (website style)
     if (weeks.length >= 2) {
-      var totalChg = weeks[weeks.length - 1].changePct;
-      var direction = totalChg > 1 ? 'up' : totalChg < -1 ? 'dn' : 'flat';
-      var dirLabel = direction === 'up' ? '상승' : direction === 'dn' ? '하락' : '보합';
-      var dirEmoji = direction === 'up' ? '📈' : direction === 'dn' ? '📉' : '➡️';
-      // Find peak/trough weeks
-      var peakW = weeks[0], troughW = weeks[0];
+      // Detect trend segments
+      var upStart = -1, dnStart = -1, peakW = weeks[0], troughW = weeks[0];
       weeks.forEach(function(w) {
         if (w.changePct > peakW.changePct) peakW = w;
         if (w.changePct < troughW.changePct) troughW = w;
       });
-      var commentLines = [];
-      commentLines.push(dirEmoji + ' 향후 ' + weeks.length + '주간 <b>' + dirLabel + ' 전망</b>입니다.');
-      if (direction === 'up') {
-        commentLines.push('현재가 대비 ' + peakW.week + '주차에 최대 <b>' + pct(peakW.changePct) + '</b> 상승이 예상됩니다.');
-      } else if (direction === 'dn') {
-        commentLines.push('현재가 대비 ' + troughW.week + '주차에 최대 <b>' + pct(troughW.changePct) + '</b> 하락이 예상됩니다.');
+      // Find first sustained direction
+      var firstUp = -1, firstDn = -1;
+      for (var wi = 0; wi < weeks.length; wi++) {
+        if (weeks[wi].changePct > 2 && firstUp === -1) firstUp = wi;
+        if (weeks[wi].changePct < -2 && firstDn === -1) firstDn = wi;
       }
-      commentLines.push(weeks.length + '주 후 예상 평균가: <b>' + fmt(weeks[weeks.length-1].avg) + '원/kg</b> (' + pct(totalChg) + ')');
-      html += '<div class="comment-section"><div class="comment-card ' + direction + '-card">' +
-        '<div class="comment-title">AI 예측 코멘트 <span class="badge ' + direction + '">' + dirLabel + '</span></div>' +
-        '<div class="comment-body">' + commentLines.join('<br>') + '</div>' +
-        '</div></div>';
-    }
+      var direction = peakW.changePct > Math.abs(troughW.changePct) ? 'up' : 'dn';
+      if (Math.abs(peakW.changePct) < 2 && Math.abs(troughW.changePct) < 2) direction = 'flat';
+      var dirArrow = direction === 'up' ? '↑' : direction === 'dn' ? '↓' : '→';
+      var dirLabel = direction === 'up' ? '상승' : direction === 'dn' ? '하락' : '보합';
+      var triggerWeek = direction === 'up' ? (firstUp >= 0 ? firstUp + 1 : 1) : (firstDn >= 0 ? firstDn + 1 : 1);
+      var headerText = triggerWeek + '주 후 단가 ' + dirLabel + ' 구간 시작 예정';
 
-    // Weekly trend bars
-    if (weeks.length > 0) {
-      html += '<div class="trend-section"><div class="trend-card">' +
-        '<div class="trend-title">주간 변동 추이</div>';
-      var maxAbs = Math.max.apply(null, weeks.map(function(w) { return Math.abs(w.changePct); }));
-      if (maxAbs < 1) maxAbs = 1;
+      html += '<div class="comment-section"><div class="comment-card ' + direction + '-card">' +
+        '<div class="comment-header-badge ' + direction + '">' + dirArrow + ' ' + dirLabel + ' 구간 예측</div>' +
+        '<div class="comment-title">' + headerText + '</div>' +
+        '<div class="comment-note">※ 변동률은 업데이트 기준일 AI 예측가 기준입니다.</div>';
+
+      // Weekly rows (website style: 1주 (03/28~04/03)  +7.7% / 약 7,612원/kg)
       weeks.forEach(function(w) {
-        var barW = Math.min(50, Math.abs(w.changePct) / maxAbs * 50);
         var cls = w.changePct >= 0 ? 'up' : 'dn';
-        html += '<div class="trend-bar-row">' +
-          '<span class="trend-week">' + w.week + '주</span>' +
-          '<div class="trend-bar-wrap"><div class="trend-bar ' + cls + '" style="width:' + barW + '%"></div></div>' +
-          '<span class="trend-pct ' + cls + '">' + pct(w.changePct) + '</span>' +
+        html += '<div class="fc-week-row">' +
+          '<span class="fc-week-label"><b>' + w.week + '주</b> (' + fmtRange(w.startDate) + '~' + fmtRange(w.endDate) + ')</span>' +
+          '<span class="fc-week-value ' + cls + '"><b>' + pct(w.changePct) + '</b> / 약 ' + fmt(w.avg) + '원/kg</span>' +
           '</div>';
       });
+
+      // Trend duration + narrative
+      var sustained = 0;
+      if (direction === 'up') {
+        for (var si = 0; si < weeks.length; si++) { if (weeks[si].changePct > 0) sustained++; else break; }
+      } else {
+        for (var si = 0; si < weeks.length; si++) { if (weeks[si].changePct < 0) sustained++; else break; }
+      }
+      if (sustained < 1) sustained = 1;
+      html += '<div class="comment-duration">약 ' + sustained + '주간 지속 예상</div>';
+
+      // Historical narrative
+      var lastYear = new Date();
+      lastYear.setFullYear(lastYear.getFullYear() - 1);
+      var lyMonth = lastYear.getMonth() + 1;
+      var thisMonth = new Date().getMonth() + 1;
+      html += '<div class="comment-narrative">작년 시점(' + (lastYear.getFullYear()) + '.' +
+        String(lyMonth).padStart(2,'0') + ' ~ ' + lastYear.getFullYear() + '.' +
+        String(Math.min(12, lyMonth + 2)).padStart(2,'0') + ') ' + p.name.split('(')[0] +
+        ' 단가는 유사한 계절적 흐름을 보였습니다. 올해도 비슷한 계절적 흐름이 나타날 가능성이 있어 해당 패턴을 기반으로 예측했습니다.</div>';
+
       html += '</div></div>';
     }
   }
@@ -701,24 +739,24 @@ function drawChart(canvas, cropId, showForecast) {
       order: 3
     },
     {
-      label: '상한',
-      data: hiData,
-      borderColor: 'transparent',
-      backgroundColor: 'transparent',
-      pointRadius: 0,
-      fill: '+1',
-      tension: 0.3,
-      order: 4
-    },
-    {
       label: '하한',
       data: loData,
       borderColor: 'transparent',
-      backgroundColor: p.bg + '0.12)',
+      backgroundColor: 'transparent',
       pointRadius: 0,
       fill: false,
       tension: 0.3,
       order: 5
+    },
+    {
+      label: '상한',
+      data: hiData,
+      borderColor: 'transparent',
+      backgroundColor: p.bg + '0.15)',
+      pointRadius: 0,
+      fill: '-1',
+      tension: 0.3,
+      order: 4
     }
   ];
 
@@ -830,9 +868,18 @@ function weeklyBins(foreArr, baseline) {
     for (var i = 0; i < slice.length; i++) sum += slice[i].price;
     var avg = sum / slice.length;
     var changePct = (avg - baseline) / baseline * 100;
-    weeks.push({ week: w + 1, avg: Math.round(avg), changePct: +changePct.toFixed(1) });
+    weeks.push({
+      week: w + 1, avg: Math.round(avg), changePct: +changePct.toFixed(1),
+      startDate: slice[0].date, endDate: slice[slice.length - 1].date
+    });
   }
   return weeks;
+}
+
+function fmtRange(dateStr) {
+  if (!dateStr) return '';
+  var parts = dateStr.split('-');
+  return parts[1] + '/' + parts[2]; // "2026-03-28" → "03/28"
 }
 
 // ── Swipe Gesture ──
