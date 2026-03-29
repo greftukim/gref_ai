@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>농산물 가격예측 AI</title>
+<title>GREF - 농산물 가격예측</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 <style>
 :root {
   --bg: #F4F6F8;
@@ -257,6 +258,53 @@ body {
 .model-stat-val { font-size:16px; font-weight:700; }
 .model-stat-label { font-size:10px; color:#94A3B8; }
 
+/* Chart Legend */
+.chart-legend {
+  display:flex; gap:12px; margin-top:8px; flex-wrap:wrap;
+}
+.chart-legend-item {
+  display:flex; align-items:center; gap:4px; font-size:11px; color:var(--dim);
+}
+.legend-line {
+  width:18px; height:2px; border-radius:1px;
+}
+.legend-line.dashed {
+  background: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
+  height:2px;
+}
+.legend-band {
+  width:18px; height:10px; border-radius:2px; opacity:0.3;
+}
+.legend-today {
+  width:0; height:12px;
+  border-left: 2px dashed var(--red);
+}
+
+/* Comment Box */
+.comment-section { padding: 0 16px 12px; }
+.comment-card {
+  background: var(--surface);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 14px;
+}
+.comment-card.up-card { border-left: 3px solid var(--red); }
+.comment-card.dn-card { border-left: 3px solid var(--accent); }
+.comment-card.flat-card { border-left: 3px solid var(--muted); }
+.comment-title {
+  font-size: 14px; font-weight: 600; margin-bottom:8px;
+}
+.comment-title .badge {
+  display:inline-block; padding:2px 8px; border-radius:10px;
+  font-size:11px; font-weight:600; margin-left:6px;
+}
+.badge.up { background:rgba(225,29,72,0.1); color:var(--red); }
+.badge.dn { background:rgba(37,99,235,0.1); color:var(--accent); }
+.badge.flat { background:rgba(148,163,184,0.15); color:var(--muted); }
+.comment-body {
+  font-size: 13px; line-height:1.6; color:var(--dim);
+}
+
 /* Footer */
 .footer {
   text-align:center;
@@ -300,7 +348,7 @@ body {
 <div class="header">
   <div class="header-top">
     <div>
-      <h1>PriceFlow <span>AI</span></h1>
+      <h1><span>GREF</span></h1>
       <div class="header-date" id="header-date">데이터 로딩중...</div>
     </div>
   </div>
@@ -321,10 +369,10 @@ body {
 <script>
 // ── Config ──
 const PRODUCTS = {
-  strawberry: { name:'딸기(설향)', emoji:'🍓', unit:'원/kg', color:'#FF69B4', bg:'rgba(255,105,180,' },
-  cucumber:   { name:'오이(백다다기)', emoji:'🥒', unit:'원/kg', color:'#2EFF8B', bg:'rgba(46,255,139,' },
   tomato:     { name:'토마토(완숙)', emoji:'🍅', unit:'원/kg', color:'#FF5C5C', bg:'rgba(255,92,92,' },
-  paprika:    { name:'파프리카(미니)', emoji:'🌶️', unit:'원/kg', color:'#FF8C00', bg:'rgba(255,140,0,' }
+  cucumber:   { name:'오이(백다다기)', emoji:'🥒', unit:'원/kg', color:'#2EFF8B', bg:'rgba(46,255,139,' },
+  paprika:    { name:'파프리카(미니)', emoji:'🌶️', unit:'원/kg', color:'#FF8C00', bg:'rgba(255,140,0,' },
+  strawberry: { name:'딸기(설향)', emoji:'🍓', unit:'원/kg', color:'#FF69B4', bg:'rgba(255,105,180,' }
 };
 const CROP_IDS = Object.keys(PRODUCTS);
 const OFF_SEASON = { strawberry: [7, 8] };
@@ -477,22 +525,6 @@ function renderOverview() {
   });
   html += '</div>';
 
-  // Model banner
-  if (state.modelPerf) {
-    var models = state.modelPerf.models || {};
-    var mKey = Object.keys(models)[0];
-    if (mKey) {
-      var m = models[mKey];
-      html += '<div class="model-banner">' +
-        '<div class="label">AI 예측 모델</div>' +
-        '<div class="model-name">' + mKey + '</div>' +
-        '<div class="model-stats">' +
-        '<div><div class="model-stat-val">' + (m.mape || '-') + '%</div><div class="model-stat-label">MAPE</div></div>' +
-        '<div><div class="model-stat-val">' + fmt(m.rmse) + '</div><div class="model-stat-label">RMSE</div></div>' +
-        '</div></div>';
-    }
-  }
-
   // Mini charts for each crop
   CROP_IDS.forEach(function(id) {
     var p = PRODUCTS[id];
@@ -507,7 +539,7 @@ function renderOverview() {
       '</div></div>';
   });
 
-  html += '<div class="footer">PriceFlow AI Dashboard · 4-Model Stacking Ensemble<br>데이터: 농넷 · 매일 자동 갱신</div>';
+  html += '<div class="footer">GREF · 농산물 가격예측 AI 대시보드<br>데이터: 농넷 · 매일 자동 갱신</div>';
   document.getElementById('app').innerHTML = html;
 
   // Draw mini charts
@@ -569,6 +601,32 @@ function renderDetail(id) {
     });
     html += '</div></div>';
 
+    // Forecast comment box
+    if (weeks.length >= 2) {
+      var totalChg = weeks[weeks.length - 1].changePct;
+      var direction = totalChg > 1 ? 'up' : totalChg < -1 ? 'dn' : 'flat';
+      var dirLabel = direction === 'up' ? '상승' : direction === 'dn' ? '하락' : '보합';
+      var dirEmoji = direction === 'up' ? '📈' : direction === 'dn' ? '📉' : '➡️';
+      // Find peak/trough weeks
+      var peakW = weeks[0], troughW = weeks[0];
+      weeks.forEach(function(w) {
+        if (w.changePct > peakW.changePct) peakW = w;
+        if (w.changePct < troughW.changePct) troughW = w;
+      });
+      var commentLines = [];
+      commentLines.push(dirEmoji + ' 향후 ' + weeks.length + '주간 <b>' + dirLabel + ' 전망</b>입니다.');
+      if (direction === 'up') {
+        commentLines.push('현재가 대비 ' + peakW.week + '주차에 최대 <b>' + pct(peakW.changePct) + '</b> 상승이 예상됩니다.');
+      } else if (direction === 'dn') {
+        commentLines.push('현재가 대비 ' + troughW.week + '주차에 최대 <b>' + pct(troughW.changePct) + '</b> 하락이 예상됩니다.');
+      }
+      commentLines.push(weeks.length + '주 후 예상 평균가: <b>' + fmt(weeks[weeks.length-1].avg) + '원/kg</b> (' + pct(totalChg) + ')');
+      html += '<div class="comment-section"><div class="comment-card ' + direction + '-card">' +
+        '<div class="comment-title">AI 예측 코멘트 <span class="badge ' + direction + '">' + dirLabel + '</span></div>' +
+        '<div class="comment-body">' + commentLines.join('<br>') + '</div>' +
+        '</div></div>';
+    }
+
     // Weekly trend bars
     if (weeks.length > 0) {
       html += '<div class="trend-section"><div class="trend-card">' +
@@ -588,7 +646,7 @@ function renderDetail(id) {
     }
   }
 
-  html += '<div class="footer">PriceFlow AI Dashboard · 4-Model Stacking Ensemble<br>데이터: 농넷 · 매일 자동 갱신</div>';
+  html += '<div class="footer">GREF · 농산물 가격예측 AI 대시보드<br>데이터: 농넷 · 매일 자동 갱신</div>';
   document.getElementById('app').innerHTML = html;
 
   var el = document.getElementById('detail-chart');
@@ -664,6 +722,40 @@ function drawChart(canvas, cropId, showForecast) {
     }
   ];
 
+  // Find today index for annotation line
+  var todayStr = state.today || '';
+  var todayIdx = -1;
+  for (var ti = 0; ti < allLabels.length; ti++) {
+    if (allLabels[ti] === todayStr) { todayIdx = ti; break; }
+  }
+  // If exact match not found, use last historical date
+  if (todayIdx === -1 && labels.length > 0) {
+    todayIdx = labels.length - 1;
+    todayStr = labels[labels.length - 1];
+  }
+
+  var annotations = {};
+  if (todayIdx >= 0) {
+    annotations.todayLine = {
+      type: 'line',
+      xMin: todayStr,
+      xMax: todayStr,
+      borderColor: 'rgba(225,29,72,0.5)',
+      borderWidth: 1.5,
+      borderDash: [4, 3],
+      label: {
+        display: true,
+        content: '기준일',
+        position: 'start',
+        backgroundColor: 'rgba(225,29,72,0.8)',
+        color: '#fff',
+        font: { size: 9, weight: '600' },
+        padding: { x: 4, y: 2 },
+        borderRadius: 4
+      }
+    };
+  }
+
   new Chart(canvas.getContext('2d'), {
     type: 'line',
     data: { labels: allLabels, datasets: datasets },
@@ -674,6 +766,7 @@ function drawChart(canvas, cropId, showForecast) {
       interaction: { intersect: false, mode: 'index' },
       plugins: {
         legend: { display: false },
+        annotation: { annotations: annotations },
         tooltip: {
           backgroundColor: 'rgba(30,41,59,0.92)',
           titleFont: { size: 11 },
@@ -712,6 +805,19 @@ function drawChart(canvas, cropId, showForecast) {
       }
     }
   });
+
+  // Add legend below chart
+  var legendContainer = canvas.parentElement.parentElement.querySelector('.chart-legend');
+  if (!legendContainer) {
+    legendContainer = document.createElement('div');
+    legendContainer.className = 'chart-legend';
+    canvas.parentElement.parentElement.appendChild(legendContainer);
+  }
+  legendContainer.innerHTML =
+    '<div class="chart-legend-item"><div class="legend-line" style="background:' + p.color + '"></div>실제 가격</div>' +
+    '<div class="chart-legend-item"><div class="legend-line dashed" style="color:' + p.color + '"></div>AI 예측</div>' +
+    '<div class="chart-legend-item"><div class="legend-band" style="background:' + p.color + '"></div>신뢰구간</div>' +
+    '<div class="chart-legend-item"><div class="legend-today"></div>기준일</div>';
 }
 
 // ── Weekly Bins ──
