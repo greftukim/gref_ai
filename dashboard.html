@@ -1502,7 +1502,7 @@
     // ╚═══════════════════════════════════════════════════════════╝
     // @@INJECT_START@@
     // 자동 생성 — inject_data.py
-    var INJECTED_LAST_UPDATED = "2026-04-05 00:36";
+    var INJECTED_LAST_UPDATED = "2026-04-05 00:49";
     var INJECTED_TODAY        = "2026-04-03";
     var INJECTED_HISTORICAL   = {
       "strawberry": [
@@ -31629,7 +31629,7 @@
       }
     };
     var INJECTED_MODEL_PERF   = {
-      "last_updated": "2026-04-05 00:36",
+      "last_updated": "2026-04-05 00:49",
       "models": {
         "Stacking(LGB+CB+DL+NHiTS)": {
           "mape": 13.76,
@@ -34889,6 +34889,205 @@
         }
       ]
     };
+    // weekly_compare: 이전 예측 vs 실제 비교 (주간 오차율)
+    var INJECTED_WEEKLY_COMPARE = {
+      "strawberry": {
+        "prev_generated": "2026-04-05",
+        "match_days": 7,
+        "mape": 29.6,
+        "details": [
+          {
+            "date": "2026-03-27",
+            "actual": 6222,
+            "predicted": 6563,
+            "error_pct": 5.5
+          },
+          {
+            "date": "2026-03-28",
+            "actual": 6536,
+            "predicted": 7071,
+            "error_pct": 8.2
+          },
+          {
+            "date": "2026-03-30",
+            "actual": 5930,
+            "predicted": 7445,
+            "error_pct": 25.5
+          },
+          {
+            "date": "2026-03-31",
+            "actual": 5008,
+            "predicted": 7563,
+            "error_pct": 51.0
+          },
+          {
+            "date": "2026-04-01",
+            "actual": 5170,
+            "predicted": 7905,
+            "error_pct": 52.9
+          },
+          {
+            "date": "2026-04-02",
+            "actual": 5447,
+            "predicted": 8066,
+            "error_pct": 48.1
+          },
+          {
+            "date": "2026-04-03",
+            "actual": 6778,
+            "predicted": 7878,
+            "error_pct": 16.2
+          }
+        ]
+      },
+      "cucumber": {
+        "prev_generated": "2026-04-05",
+        "match_days": 7,
+        "mape": 23.1,
+        "details": [
+          {
+            "date": "2026-03-27",
+            "actual": 2055,
+            "predicted": 2594,
+            "error_pct": 26.2
+          },
+          {
+            "date": "2026-03-28",
+            "actual": 2392,
+            "predicted": 2635,
+            "error_pct": 10.2
+          },
+          {
+            "date": "2026-03-30",
+            "actual": 1856,
+            "predicted": 2450,
+            "error_pct": 32.0
+          },
+          {
+            "date": "2026-03-31",
+            "actual": 1866,
+            "predicted": 2487,
+            "error_pct": 33.3
+          },
+          {
+            "date": "2026-04-01",
+            "actual": 1856,
+            "predicted": 2370,
+            "error_pct": 27.7
+          },
+          {
+            "date": "2026-04-02",
+            "actual": 2075,
+            "predicted": 2312,
+            "error_pct": 11.4
+          },
+          {
+            "date": "2026-04-03",
+            "actual": 1934,
+            "predicted": 2340,
+            "error_pct": 21.0
+          }
+        ]
+      },
+      "tomato": {
+        "prev_generated": "2026-04-05",
+        "match_days": 7,
+        "mape": 10.4,
+        "details": [
+          {
+            "date": "2026-03-27",
+            "actual": 3144,
+            "predicted": 3224,
+            "error_pct": 2.5
+          },
+          {
+            "date": "2026-03-28",
+            "actual": 3033,
+            "predicted": 3235,
+            "error_pct": 6.7
+          },
+          {
+            "date": "2026-03-30",
+            "actual": 2919,
+            "predicted": 3284,
+            "error_pct": 12.5
+          },
+          {
+            "date": "2026-03-31",
+            "actual": 2800,
+            "predicted": 3199,
+            "error_pct": 14.2
+          },
+          {
+            "date": "2026-04-01",
+            "actual": 2932,
+            "predicted": 3229,
+            "error_pct": 10.1
+          },
+          {
+            "date": "2026-04-02",
+            "actual": 2824,
+            "predicted": 3028,
+            "error_pct": 7.2
+          },
+          {
+            "date": "2026-04-03",
+            "actual": 2684,
+            "predicted": 3210,
+            "error_pct": 19.6
+          }
+        ]
+      },
+      "paprika": {
+        "prev_generated": "2026-04-05",
+        "match_days": 7,
+        "mape": 58.3,
+        "details": [
+          {
+            "date": "2026-03-27",
+            "actual": 5497,
+            "predicted": 8136,
+            "error_pct": 48.0
+          },
+          {
+            "date": "2026-03-28",
+            "actual": 5559,
+            "predicted": 8682,
+            "error_pct": 56.2
+          },
+          {
+            "date": "2026-03-30",
+            "actual": 5507,
+            "predicted": 8532,
+            "error_pct": 54.9
+          },
+          {
+            "date": "2026-03-31",
+            "actual": 5364,
+            "predicted": 8275,
+            "error_pct": 54.3
+          },
+          {
+            "date": "2026-04-01",
+            "actual": 5139,
+            "predicted": 8208,
+            "error_pct": 59.7
+          },
+          {
+            "date": "2026-04-02",
+            "actual": 5018,
+            "predicted": 8300,
+            "error_pct": 65.4
+          },
+          {
+            "date": "2026-04-03",
+            "actual": 4997,
+            "predicted": 8489,
+            "error_pct": 69.9
+          }
+        ]
+      }
+    };
     // @@INJECT_END@@
 
     // ═══════════════════════════════════════════════════════════
@@ -36004,23 +36203,20 @@
         `;
       }).join('');
 
-      // Weekly prediction vs actual comparison
+      // Weekly prediction vs actual comparison (INJECTED_WEEKLY_COMPARE 기반)
+      var _wc = (typeof INJECTED_WEEKLY_COMPARE !== 'undefined' && INJECTED_WEEKLY_COMPARE) ? INJECTED_WEEKLY_COMPARE : null;
       var weeklyCompHtml = ids.map(function(id) {
         var p = PRODUCTS[id];
-        var d = filtered[id] || [];
-        var aiData = (state.tftData && state.tftData[id]) ? state.tftData[id].forecast : [];
-        if (!d.length || !aiData || !aiData.length) {
-          return '<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border)"><div style="font-size:13px; font-weight:700; color:' + p.color + '">' + p.emoji + ' ' + p.name.split('(')[0] + '</div><div style="font-size:12px; color:var(--muted)">데이터 대기중</div></div>';
+        var comp = _wc ? _wc[id] : null;
+        if (!comp || !comp.details || comp.details.length === 0) {
+          return '<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border)"><div style="font-size:13px; font-weight:700; color:' + p.color + '">' + p.emoji + ' ' + p.name.split('(')[0] + '</div><div style="font-size:12px; color:var(--muted)">이전 예측 데이터 대기중 (재학습 후 비교 가능)</div></div>';
         }
-        var recent = d.slice(-7);
-        var errorSum = 0; var cnt = 0;
-        recent.forEach(function(row) {
-          var matched = aiData.find(function(f) { return f.date === row.date; });
-          if (matched) { errorSum += Math.abs(row.price - matched.price) / row.price; cnt++; }
-        });
-        var weekMape = cnt > 0 ? (errorSum / cnt * 100).toFixed(1) + '%' : '-';
-        var mc = cnt > 0 && (errorSum / cnt * 100) < 10 ? 'var(--green)' : cnt > 0 && (errorSum / cnt * 100) < 15 ? '#D97706' : 'var(--red)';
-        return '<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border)"><div style="font-size:13px; font-weight:700; color:' + p.color + '">' + p.emoji + ' ' + p.name.split('(')[0] + '</div><div style="display:flex; gap:16px; font-size:12px"><span style="color:var(--dim)">최근 실측: <b style="color:var(--text)">' + (recent.length > 0 ? fmt(recent[recent.length - 1].price) : '-') + '</b></span><span style="color:var(--dim)">주간 MAPE: <b style="color:' + mc + '">' + weekMape + '</b></span></div><div style="font-size:10px; padding:2px 8px; border-radius:20px; background:' + (cnt > 0 && (errorSum / cnt * 100) < 10 ? 'rgba(5,150,105,0.15)' : 'rgba(0,0,0,0.06)') + '; color:' + mc + '; font-weight:700">' + (cnt > 0 ? cnt + '일 비교' : '대기') + '</div></div>';
+        var weekMape = comp.mape.toFixed(1) + '%';
+        var cnt = comp.match_days;
+        var lastDetail = comp.details[comp.details.length - 1];
+        var mc = comp.mape < 10 ? 'var(--green)' : comp.mape < 15 ? '#D97706' : 'var(--red)';
+        var badgeBg = comp.mape < 10 ? 'rgba(5,150,105,0.15)' : 'rgba(0,0,0,0.06)';
+        return '<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border)"><div style="font-size:13px; font-weight:700; color:' + p.color + '">' + p.emoji + ' ' + p.name.split('(')[0] + '</div><div style="display:flex; gap:16px; font-size:12px"><span style="color:var(--dim)">최근 실측: <b style="color:var(--text)">' + fmt(lastDetail.actual) + '</b></span><span style="color:var(--dim)">예측: <b style="color:var(--text)">' + fmt(lastDetail.predicted) + '</b></span><span style="color:var(--dim)">주간 MAPE: <b style="color:' + mc + '">' + weekMape + '</b></span></div><div style="font-size:10px; padding:2px 8px; border-radius:20px; background:' + badgeBg + '; color:' + mc + '; font-weight:700">' + cnt + '일 비교</div></div>';
       }).join('');
 
       var integratedSummaryHtml = '<div style="margin-top:16px; padding:12px 16px; background:rgba(5,150,105,0.08); border-radius:10px; border:1px solid rgba(5,150,105,0.2); text-align:center"><div style="font-size:11px; color:var(--dim)">4-Model Stacking Ensemble (LightGBM + CatBoost + DLinear + N-HiTS)</div><div style="font-size:10px; color:var(--muted); margin-top:4px">Inverse-MAPE 가중 평균 | 주간 재학습 주기</div></div>';

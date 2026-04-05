@@ -23,6 +23,7 @@ DATA_DIR       = os.path.join(BASE_DIR, "data")
 DASHBOARD_HTML = os.path.join(BASE_DIR, "dashboard.html")
 MODEL_PERF_JSON = os.path.join(BASE_DIR, "model_performance.json")
 LGBM_DATED_JSON = os.path.join(BASE_DIR, "lgbm_forecast_dated.json")
+LGBM_PREV_JSON  = os.path.join(BASE_DIR, "lgbm_forecast_previous.json")
 GLOBAL_CLEAN_DATA = os.path.join(BASE_DIR, "농넷_과거파일", "final_clean_dataset.csv")
 
 # ── 작물 설정 ──────────────────────────────────────────────────────────────
@@ -237,6 +238,51 @@ def generate():
     today_str = max(all_last_dates)
     print(f"\n[TODAY] {today_str}")
 
+    # ── 주간 예측 vs 실제 비교 (이전 예측 기반) ─────────────────────────
+    weekly_compare = {}
+    lgbm_prev = None
+    if os.path.exists(LGBM_PREV_JSON):
+        with open(LGBM_PREV_JSON, encoding='utf-8') as f:
+            lgbm_prev = json.load(f)
+        prev_date = lgbm_prev.get('generated_at', 'unknown')[:10]
+        print(f"[OK] lgbm_forecast_previous.json loaded (generated: {prev_date})")
+
+        for name in CROPS:
+            prev_fc = lgbm_prev.get('forecasts', {}).get(name, [])
+            hist = historical.get(name, [])
+            if not prev_fc or not hist:
+                continue
+
+            # 히스토리컬 데이터를 날짜→가격 맵으로 변환
+            actual_map = {h['date']: h['price'] for h in hist}
+
+            # 이전 예측 중 실제 데이터가 있는 날짜만 매칭
+            matches = []
+            for fc in prev_fc:
+                fc_date = fc.get('date', '')
+                if fc_date in actual_map:
+                    actual = actual_map[fc_date]
+                    predicted = fc['price']
+                    error_pct = abs(actual - predicted) / actual * 100 if actual > 0 else 0
+                    matches.append({
+                        'date': fc_date,
+                        'actual': actual,
+                        'predicted': predicted,
+                        'error_pct': round(error_pct, 1)
+                    })
+
+            if matches:
+                avg_mape = round(sum(m['error_pct'] for m in matches) / len(matches), 1)
+                weekly_compare[name] = {
+                    'prev_generated': prev_date,
+                    'match_days': len(matches),
+                    'mape': avg_mape,
+                    'details': matches[-7:]  # 최근 7일만
+                }
+                print(f"         [{name}] 주간비교: {len(matches)}일 매칭, MAPE={avg_mape}%")
+    else:
+        print(f"[INFO] lgbm_forecast_previous.json not found -- weekly comparison unavailable")
+
     # ── 모델 성능 로드 ────────────────────────────────────────────────────
     model_perf = None
     if os.path.exists(MODEL_PERF_JSON):
@@ -260,6 +306,8 @@ def generate():
         f"{pad}var INJECTED_MODEL_PERF   = {indent_json(model_perf, base_indent=len(pad))};",
         f"{pad}// test_results: 날짜별 실제vs예측 (AI backtesting, null이면 미사용)",
         f"{pad}var INJECTED_TEST_RESULTS = {indent_json(test_results if test_results else None, base_indent=len(pad))};",
+        f"{pad}// weekly_compare: 이전 예측 vs 실제 비교 (주간 오차율)",
+        f"{pad}var INJECTED_WEEKLY_COMPARE = {indent_json(weekly_compare if weekly_compare else None, base_indent=len(pad))};",
         f"{pad}// @@INJECT_END@@",
     ]
     inject_block = '\n'.join(inject_lines)

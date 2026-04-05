@@ -678,6 +678,13 @@ def main():
         all_test[crop_name] = test_result
         all_fore[crop_name] = [{**row, 'unit': 'won/kg', 'avg_price': row['price']*w, 'box_unit': box_unit} for row in forecast_rows]
         all_stats[crop_name] = stats
+    # 이전 예측 백업 (주간 오차율 비교용)
+    PREV_JSON = os.path.join(BASE_DIR, "lgbm_forecast_previous.json")
+    if os.path.exists(OUT_JSON):
+        import shutil
+        shutil.copy2(OUT_JSON, PREV_JSON)
+        print(f"[BACKUP] Previous forecast saved to lgbm_forecast_previous.json")
+
     output = {'generated_at': datetime.now().isoformat(),
         'note': 'v4: 4-Model Stacking + Weather', 'test_results': all_test,
         'forecasts': all_fore, 'stats': all_stats}
