@@ -44,13 +44,39 @@ jobs:
           python execution/nongnet_crawler.py
         continue-on-error: true   # 크롤링 실패 시에도 기존 CSV로 JSON 생성
 
-      # ── 6. prices.json 생성 (모델 학습 건너뜀 — 기존 예측 재사용) ──────────
+      # ── 6a. 드리프트 감지 (예측선 vs 최신 실측치 비교) ────────────────────
+      #       exit 10 → 재학습 필요, exit 0 → 기존 예측 재사용
+      - name: Detect forecast drift
+        id: drift
+        run: |
+          set +e
+          python execution/detect_drift.py --window 10 --mape-threshold 20 --stale-days 14
+          code=$?
+          set -e
+          echo "drift_exit=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" = "10" ]; then
+            echo "retrain=true"  >> "$GITHUB_OUTPUT"
+          elif [ "$code" = "0" ]; then
+            echo "retrain=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::detect_drift.py failed with exit $code"
+            exit "$code"
+          fi
+
+      # ── 6b. prices.json 생성 (드리프트 있으면 재학습, 없으면 기존 예측 재사용) ─
       - name: Generate prices.json
         env:
           WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
           KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
           KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
-        run: python execution/main_update.py --skip-train
+        run: |
+          if [ "${{ steps.drift.outputs.retrain }}" = "true" ]; then
+            echo "⚠ drift detected → re-training models"
+            python execution/main_update.py
+          else
+            echo "✓ no drift → reusing existing forecast"
+            python execution/main_update.py --skip-train
+          fi
 
       # ── 7. dashboard.html 데이터 주입 (최신 데이터 정적 반영) ────────────────
       - name: Inject data into dashboard.html
@@ -61,6 +87,6 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/prices.json data/*.csv dashboard.html dashboard_data.json historical_data.json
+          git add data/prices.json data/*.csv dashboard.html dashboard_data.json historical_data.json lgbm_forecast_dated.json model_performance.json
           git diff --staged --quiet || git commit -m "chore: 데이터 자동 업데이트 $(date +'%Y-%m-%d') [skip ci]"
           git push
