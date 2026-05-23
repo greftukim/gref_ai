@@ -1,16 +1,8 @@
 {
-  "last_updated": "2026-05-22 02:46",
-  "today": "2026-05-21",
+  "last_updated": "2026-05-23 02:36",
+  "today": "2026-05-22",
   "historical": {
     "strawberry": [
-      {
-        "date": "2023-01-28",
-        "price": 9733,
-        "avg_price": 9733,
-        "unit": "원/kg",
-        "box_unit": "1kg상자",
-        "volume": 81001
-      },
       {
         "date": "2023-01-30",
         "price": 9712,
@@ -5797,19 +5789,19 @@
       },
       {
         "date": "2026-05-15",
-        "price": 5769,
-        "avg_price": 5769,
+        "price": 5797,
+        "avg_price": 5797,
         "unit": "원/kg",
         "box_unit": "1kg상자",
-        "volume": 198965
+        "volume": 194550
       },
       {
         "date": "2026-05-16",
-        "price": 5734,
-        "avg_price": 5734,
+        "price": 5742,
+        "avg_price": 5742,
         "unit": "원/kg",
         "box_unit": "1kg상자",
-        "volume": 215915
+        "volume": 212014
       },
       {
         "date": "2026-05-18",
@@ -5837,22 +5829,22 @@
       },
       {
         "date": "2026-05-21",
-        "price": 7829,
-        "avg_price": 7829,
+        "price": 7079,
+        "avg_price": 7079,
         "unit": "원/kg",
         "box_unit": "1kg상자",
-        "volume": 57100
+        "volume": 83053
+      },
+      {
+        "date": "2026-05-22",
+        "price": 7430,
+        "avg_price": 7430,
+        "unit": "원/kg",
+        "box_unit": "1kg상자",
+        "volume": 49789
       }
     ],
     "cucumber": [
-      {
-        "date": "2024-01-08",
-        "price": 3699,
-        "avg_price": 36990,
-        "unit": "원/kg",
-        "box_unit": "10kg상자",
-        "volume": 163046
-      },
       {
         "date": "2024-01-09",
         "price": 3324,
@@ -11639,19 +11631,19 @@
       },
       {
         "date": "2026-05-15",
-        "price": 1022,
-        "avg_price": 10220,
+        "price": 1018,
+        "avg_price": 10180,
         "unit": "원/kg",
         "box_unit": "10kg상자",
-        "volume": 1745074
+        "volume": 1722260
       },
       {
         "date": "2026-05-16",
-        "price": 951,
-        "avg_price": 9510,
+        "price": 955,
+        "avg_price": 9550,
         "unit": "원/kg",
         "box_unit": "10kg상자",
-        "volume": 1907671
+        "volume": 1899271
       },
       {
         "date": "2026-05-18",
@@ -11679,22 +11671,22 @@
       },
       {
         "date": "2026-05-21",
-        "price": 912,
-        "avg_price": 9120,
+        "price": 924,
+        "avg_price": 9240,
         "unit": "원/kg",
         "box_unit": "10kg상자",
-        "volume": 1153813
+        "volume": 1641382
+      },
+      {
+        "date": "2026-05-22",
+        "price": 903,
+        "avg_price": 9030,
+        "unit": "원/kg",
+        "box_unit": "10kg상자",
+        "volume": 1030402
       }
     ],
     "tomato": [
-      {
-        "date": "2024-01-10",
-        "price": 3144,
-        "avg_price": 15720,
-        "unit": "원/kg",
-        "box_unit": "5kg상자",
-        "volume": 4665
-      },
       {
         "date": "2024-01-11",
         "price": 3350,
@@ -17481,19 +17473,19 @@
       },
       {
         "date": "2026-05-15",
-        "price": 2457,
-        "avg_price": 12285,
+        "price": 2449,
+        "avg_price": 12245,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 570019
+        "volume": 562427
       },
       {
         "date": "2026-05-16",
-        "price": 2361,
-        "avg_price": 11805,
+        "price": 2362,
+        "avg_price": 11810,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 520172
+        "volume": 516454
       },
       {
         "date": "2026-05-18",
@@ -17521,22 +17513,22 @@
       },
       {
         "date": "2026-05-21",
-        "price": 2375,
-        "avg_price": 11875,
+        "price": 2326,
+        "avg_price": 11630,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 245984
+        "volume": 396712
+      },
+      {
+        "date": "2026-05-22",
+        "price": 2332,
+        "avg_price": 11660,
+        "unit": "원/kg",
+        "box_unit": "5kg상자",
+        "volume": 354965
       }
     ],
     "paprika": [
-      {
-        "date": "2023-10-04",
-        "price": 4400,
-        "avg_price": 22000,
-        "unit": "원/kg",
-        "box_unit": "5kg상자",
-        "volume": 15
-      },
       {
         "date": "2023-10-05",
         "price": 3700,
@@ -23323,19 +23315,19 @@
       },
       {
         "date": "2026-05-15",
-        "price": 4259,
-        "avg_price": 21295,
+        "price": 4245,
+        "avg_price": 21225,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 140358
+        "volume": 138384
       },
       {
         "date": "2026-05-16",
-        "price": 4160,
-        "avg_price": 20800,
+        "price": 4138,
+        "avg_price": 20690,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 164678
+        "volume": 164346
       },
       {
         "date": "2026-05-18",
@@ -23363,26 +23355,25 @@
       },
       {
         "date": "2026-05-21",
-        "price": 3850,
-        "avg_price": 19250,
+        "price": 3899,
+        "avg_price": 19495,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 69924
+        "volume": 104261
+      },
+      {
+        "date": "2026-05-22",
+        "price": 3973,
+        "avg_price": 19865,
+        "unit": "원/kg",
+        "box_unit": "5kg상자",
+        "volume": 105543
       }
     ]
   },
   "forecast": {
     "strawberry": {
       "forecast": [
-        {
-          "date": "2026-05-22",
-          "price": 5626,
-          "hi": 16682,
-          "lo": 4429,
-          "unit": "원/kg",
-          "avg_price": 5626,
-          "box_unit": "1kg상자"
-        },
         {
           "date": "2026-05-23",
           "price": 5619,
@@ -24495,15 +24486,6 @@
     "cucumber": {
       "forecast": [
         {
-          "date": "2026-05-22",
-          "price": 2192,
-          "hi": 3122,
-          "lo": 1418,
-          "unit": "원/kg",
-          "avg_price": 21920,
-          "box_unit": "10kg상자"
-        },
-        {
           "date": "2026-05-23",
           "price": 2187,
           "hi": 3111,
@@ -25614,15 +25596,6 @@
     },
     "tomato": {
       "forecast": [
-        {
-          "date": "2026-05-22",
-          "price": 2364,
-          "hi": 3602,
-          "lo": 1623,
-          "unit": "원/kg",
-          "avg_price": 11820,
-          "box_unit": "5kg상자"
-        },
         {
           "date": "2026-05-23",
           "price": 2360,
@@ -26735,15 +26708,6 @@
     "paprika": {
       "forecast": [
         {
-          "date": "2026-05-22",
-          "price": 6130,
-          "hi": 9156,
-          "lo": 5626,
-          "unit": "원/kg",
-          "avg_price": 30650,
-          "box_unit": "5kg상자"
-        },
-        {
           "date": "2026-05-23",
           "price": 6123,
           "hi": 9130,
@@ -27854,7 +27818,7 @@
     }
   },
   "model_performance": {
-    "last_updated": "2026-05-22 02:46",
+    "last_updated": "2026-05-23 02:36",
     "models": {
       "Ensemble(LightGBM+DLinear)": {
         "mape": 14.66,
