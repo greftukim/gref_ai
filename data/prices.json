@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-07-12 02:06",
+  "last_updated": "2026-07-13 02:09",
   "today": "2026-07-11",
   "historical": {
     "strawberry": [
@@ -11679,11 +11679,11 @@
       },
       {
         "date": "2026-07-11",
-        "price": 816,
-        "avg_price": 8160,
+        "price": 827,
+        "avg_price": 8270,
         "unit": "원/kg",
         "box_unit": "10kg상자",
-        "volume": 678058
+        "volume": 846059
       }
     ],
     "tomato": [
@@ -17521,11 +17521,11 @@
       },
       {
         "date": "2026-07-11",
-        "price": 1242,
-        "avg_price": 6210,
+        "price": 1239,
+        "avg_price": 6195,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 325282
+        "volume": 485598
       }
     ],
     "paprika": [
@@ -23363,11 +23363,11 @@
       },
       {
         "date": "2026-07-11",
-        "price": 2322,
-        "avg_price": 11610,
+        "price": 2713,
+        "avg_price": 13565,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 102354
+        "volume": 135893
       }
     ]
   },
@@ -26018,7 +26018,7 @@
     }
   },
   "model_performance": {
-    "last_updated": "2026-07-12 02:06",
+    "last_updated": "2026-07-13 02:09",
     "models": {
       "Ensemble(LightGBM+DLinear)": {
         "mape": 14.66,
