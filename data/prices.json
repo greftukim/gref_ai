@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-08-09 01:11",
+  "last_updated": "2026-08-10 01:12",
   "today": "2026-08-08",
   "historical": {
     "strawberry": [
@@ -5817,7 +5817,7 @@
         "avg_price": 16928,
         "unit": "원/kg",
         "box_unit": "1kg상자",
-        "volume": 234
+        "volume": 239
       },
       {
         "date": "2026-08-06",
@@ -11655,11 +11655,11 @@
       },
       {
         "date": "2026-08-05",
-        "price": 1323,
-        "avg_price": 13230,
+        "price": 1322,
+        "avg_price": 13220,
         "unit": "원/kg",
         "box_unit": "10kg상자",
-        "volume": 1737951
+        "volume": 2023130
       },
       {
         "date": "2026-08-06",
@@ -11679,11 +11679,11 @@
       },
       {
         "date": "2026-08-08",
-        "price": 1178,
-        "avg_price": 11780,
+        "price": 1221,
+        "avg_price": 12210,
         "unit": "원/kg",
         "box_unit": "10kg상자",
-        "volume": 707030
+        "volume": 958555
       }
     ],
     "tomato": [
@@ -17501,7 +17501,7 @@
         "avg_price": 7830,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 696290
+        "volume": 822445
       },
       {
         "date": "2026-08-06",
@@ -17521,11 +17521,11 @@
       },
       {
         "date": "2026-08-08",
-        "price": 1423,
-        "avg_price": 7115,
+        "price": 1420,
+        "avg_price": 7100,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 313102
+        "volume": 446446
       }
     ],
     "paprika": [
@@ -23343,7 +23343,7 @@
         "avg_price": 14005,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 320954
+        "volume": 374776
       },
       {
         "date": "2026-08-06",
@@ -23363,11 +23363,11 @@
       },
       {
         "date": "2026-08-08",
-        "price": 2937,
-        "avg_price": 14685,
+        "price": 3373,
+        "avg_price": 16865,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 83418
+        "volume": 111601
       }
     ]
   },
@@ -25010,7 +25010,7 @@
     }
   },
   "model_performance": {
-    "last_updated": "2026-08-09 01:11",
+    "last_updated": "2026-08-10 01:12",
     "models": {
       "Ensemble(LightGBM+DLinear)": {
         "mape": 14.66,
