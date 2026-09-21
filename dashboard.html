@@ -1495,8 +1495,8 @@
     // ╚═══════════════════════════════════════════════════════════╝
     // @@INJECT_START@@
     // 자동 생성 — inject_data.py
-    var INJECTED_LAST_UPDATED = "2026-09-20 02:48";
-    var INJECTED_TODAY        = "2026-09-19";
+    var INJECTED_LAST_UPDATED = "2026-09-21 02:44";
+    var INJECTED_TODAY        = "2026-09-20";
     var INJECTED_HISTORICAL   = {
       "strawberry": [
         {
@@ -7342,14 +7342,6 @@
       ],
       "cucumber": [
         {
-          "date": "2024-05-10",
-          "price": 1802,
-          "avg_price": 18016,
-          "unit": "원/kg",
-          "box_unit": "10kg상자",
-          "volume": 273168
-        },
-        {
           "date": "2024-05-11",
           "price": 1898,
           "avg_price": 18979,
@@ -13175,11 +13167,19 @@
         },
         {
           "date": "2026-09-19",
-          "price": 1261,
-          "avg_price": 12610,
+          "price": 1290,
+          "avg_price": 12900,
           "unit": "원/kg",
           "box_unit": "10kg상자",
-          "volume": 644909
+          "volume": 817426
+        },
+        {
+          "date": "2026-09-20",
+          "price": 1241,
+          "avg_price": 12410,
+          "unit": "원/kg",
+          "box_unit": "10kg상자",
+          "volume": 7610
         }
       ],
       "tomato": [
@@ -19017,11 +19017,11 @@
         },
         {
           "date": "2026-09-19",
-          "price": 4039,
-          "avg_price": 20195,
+          "price": 3978,
+          "avg_price": 19890,
           "unit": "원/kg",
           "box_unit": "5kg상자",
-          "volume": 124150
+          "volume": 166608
         }
       ],
       "paprika": [
@@ -24859,11 +24859,11 @@
         },
         {
           "date": "2026-09-19",
-          "price": 5992,
-          "avg_price": 29960,
+          "price": 6592,
+          "avg_price": 32960,
           "unit": "원/kg",
           "box_unit": "5kg상자",
-          "volume": 156093
+          "volume": 175924
         }
       ]
     };
@@ -24905,16 +24905,6 @@
       "cucumber": {
         "forecast": [
           {
-            "date": "2026-09-20",
-            "price": 2051,
-            "hi": 2369,
-            "lo": 1736,
-            "unit": "원/kg",
-            "avg_price": 20510,
-            "box_unit": "10kg상자",
-            "volume": 814500
-          },
-          {
             "date": "2026-09-21",
             "price": 4520,
             "hi": 5203,
@@ -24922,7 +24912,7 @@
             "unit": "원/kg",
             "avg_price": 45200,
             "box_unit": "10kg상자",
-            "volume": 814500
+            "volume": 750086
           },
           {
             "date": "2026-09-22",
@@ -24932,7 +24922,7 @@
             "unit": "원/kg",
             "avg_price": 45350,
             "box_unit": "10kg상자",
-            "volume": 814500
+            "volume": 750086
           }
         ]
       },
@@ -24946,7 +24936,7 @@
             "unit": "원/kg",
             "avg_price": 17265,
             "box_unit": "5kg상자",
-            "volume": 217195
+            "volume": 223260
           },
           {
             "date": "2026-09-21",
@@ -24956,7 +24946,7 @@
             "unit": "원/kg",
             "avg_price": 18425,
             "box_unit": "5kg상자",
-            "volume": 217195
+            "volume": 223260
           },
           {
             "date": "2026-09-22",
@@ -24966,7 +24956,7 @@
             "unit": "원/kg",
             "avg_price": 18465,
             "box_unit": "5kg상자",
-            "volume": 217195
+            "volume": 223260
           }
         ]
       },
@@ -24980,7 +24970,7 @@
             "unit": "원/kg",
             "avg_price": 53665,
             "box_unit": "5kg상자",
-            "volume": 142104
+            "volume": 144937
           },
           {
             "date": "2026-09-21",
@@ -24990,7 +24980,7 @@
             "unit": "원/kg",
             "avg_price": 56315,
             "box_unit": "5kg상자",
-            "volume": 142104
+            "volume": 144937
           },
           {
             "date": "2026-09-22",
@@ -25000,13 +24990,13 @@
             "unit": "원/kg",
             "avg_price": 56485,
             "box_unit": "5kg상자",
-            "volume": 142104
+            "volume": 144937
           }
         ]
       }
     };
     var INJECTED_MODEL_PERF   = {
-      "last_updated": "2026-09-20 02:48",
+      "last_updated": "2026-09-21 02:44",
       "models": {
         "Ensemble(LightGBM+DLinear)": {
           "mape": 14.66,
@@ -28326,15 +28316,9 @@
       },
       "cucumber": {
         "prev_generated": "2026-04-05",
-        "match_days": 152,
-        "mape": 73.1,
+        "match_days": 153,
+        "mape": 73.0,
         "details": [
-          {
-            "date": "2026-09-12",
-            "actual": 2642,
-            "predicted": 2377,
-            "error_pct": 10.0
-          },
           {
             "date": "2026-09-14",
             "actual": 2216,
@@ -28367,9 +28351,15 @@
           },
           {
             "date": "2026-09-19",
-            "actual": 1261,
+            "actual": 1290,
             "predicted": 2058,
-            "error_pct": 63.2
+            "error_pct": 59.5
+          },
+          {
+            "date": "2026-09-20",
+            "actual": 1241,
+            "predicted": 2055,
+            "error_pct": 65.6
           }
         ]
       },
@@ -28416,16 +28406,16 @@
           },
           {
             "date": "2026-09-19",
-            "actual": 4039,
+            "actual": 3978,
             "predicted": 3447,
-            "error_pct": 14.7
+            "error_pct": 13.3
           }
         ]
       },
       "paprika": {
         "prev_generated": "2026-04-05",
         "match_days": 152,
-        "mape": 69.5,
+        "mape": 69.4,
         "details": [
           {
             "date": "2026-09-12",
@@ -28465,9 +28455,9 @@
           },
           {
             "date": "2026-09-19",
-            "actual": 5992,
+            "actual": 6592,
             "predicted": 10709,
-            "error_pct": 78.7
+            "error_pct": 62.5
           }
         ]
       }

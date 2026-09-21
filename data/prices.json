@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-09-20 02:48",
-  "today": "2026-09-19",
+  "last_updated": "2026-09-21 02:44",
+  "today": "2026-09-20",
   "historical": {
     "strawberry": [
       {
@@ -5846,14 +5846,6 @@
     ],
     "cucumber": [
       {
-        "date": "2024-05-10",
-        "price": 1802,
-        "avg_price": 18020,
-        "unit": "원/kg",
-        "box_unit": "10kg상자",
-        "volume": 273168
-      },
-      {
         "date": "2024-05-11",
         "price": 1898,
         "avg_price": 18980,
@@ -11679,11 +11671,19 @@
       },
       {
         "date": "2026-09-19",
-        "price": 1261,
-        "avg_price": 12610,
+        "price": 1290,
+        "avg_price": 12900,
         "unit": "원/kg",
         "box_unit": "10kg상자",
-        "volume": 644909
+        "volume": 817426
+      },
+      {
+        "date": "2026-09-20",
+        "price": 1241,
+        "avg_price": 12410,
+        "unit": "원/kg",
+        "box_unit": "10kg상자",
+        "volume": 7610
       }
     ],
     "tomato": [
@@ -17521,11 +17521,11 @@
       },
       {
         "date": "2026-09-19",
-        "price": 4039,
-        "avg_price": 20195,
+        "price": 3978,
+        "avg_price": 19890,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 124150
+        "volume": 166608
       }
     ],
     "paprika": [
@@ -23363,11 +23363,11 @@
       },
       {
         "date": "2026-09-19",
-        "price": 5992,
-        "avg_price": 29960,
+        "price": 6592,
+        "avg_price": 32960,
         "unit": "원/kg",
         "box_unit": "5kg상자",
-        "volume": 156093
+        "volume": 175924
       }
     ]
   },
@@ -23405,15 +23405,6 @@
     },
     "cucumber": {
       "forecast": [
-        {
-          "date": "2026-09-20",
-          "price": 2051,
-          "hi": 2369,
-          "lo": 1736,
-          "unit": "원/kg",
-          "avg_price": 20510,
-          "box_unit": "10kg상자"
-        },
         {
           "date": "2026-09-21",
           "price": 4520,
@@ -23498,7 +23489,7 @@
     }
   },
   "model_performance": {
-    "last_updated": "2026-09-20 02:48",
+    "last_updated": "2026-09-21 02:44",
     "models": {
       "Ensemble(LightGBM+DLinear)": {
         "mape": 14.66,
