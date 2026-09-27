@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-09-26 02:57",
+  "last_updated": "2026-09-27 03:01",
   "today": "2026-09-24",
   "historical": {
     "strawberry": [
@@ -26990,7 +26990,7 @@
     }
   },
   "model_performance": {
-    "last_updated": "2026-09-26 02:57",
+    "last_updated": "2026-09-27 03:01",
     "models": {
       "Ensemble(LightGBM+DLinear)": {
         "mape": 14.66,
